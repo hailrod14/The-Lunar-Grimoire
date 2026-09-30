@@ -4,6 +4,9 @@ import { VesselSprite } from "@/components/sprites/VesselSprite";
 
 export type View = "calendar" | "day" | "journal" | "cabinet" | "settings";
 
+/** Top-to-bottom ribbon order, which decides the page-turn direction. */
+export const RIBBON_ORDER: View[] = ["calendar", "day", "journal", "cabinet", "settings"];
+
 const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[] = [
   { view: "calendar", label: "Calendar", bg: "bg-violet-500", icon: <CalendarDays size={18} strokeWidth={2.5} /> },
   { view: "day", label: "Today", bg: "bg-gold-500", icon: <PixelMoon phase={0.2} variant="tide" size={18} resolution={10} /> },

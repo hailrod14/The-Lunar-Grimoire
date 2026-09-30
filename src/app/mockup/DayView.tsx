@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, ChevronLeft, ChevronRight, HelpCircle, Plus, X } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, HelpCircle, Minus, Plus, X } from "lucide-react";
 import { SparkleBurst } from "@/components/pixel/SparkleBurst";
 import { ElementSprite } from "@/components/sprites/ElementSprite";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
@@ -258,6 +258,13 @@ function PotionsSection({ day, potions, update }: { day: DayMock; potions: Potio
   const addExtra = (potionId: string) =>
     update((d) => ({ ...d, extras: [...d.extras, { potionId, time: formatTime(new Date()) }] }));
 
+  /** Undo the most recent extra dose of this potion. */
+  const removeExtra = (potionId: string) =>
+    update((d) => {
+      const last = d.extras.findLastIndex((x) => x.potionId === potionId);
+      return last < 0 ? d : { ...d, extras: d.extras.filter((_, i) => i !== last) };
+    });
+
   return (
     <Section title="Potions">
       <div className="space-y-2">
@@ -276,6 +283,7 @@ function PotionsSection({ day, potions, update }: { day: DayMock; potions: Potio
               })
             }
             onExtra={() => addExtra(p.id)}
+            onRemoveExtra={() => removeExtra(p.id)}
           />
         ))}
       </div>
@@ -289,59 +297,85 @@ function PotionRow({
   extras,
   onToggle,
   onExtra,
+  onRemoveExtra,
 }: {
   potion: Potion;
   takenAt?: string;
   extras: string[];
   onToggle: () => void;
   onExtra: () => void;
+  onRemoveExtra: () => void;
 }) {
   const [burst, setBurst] = useState(0);
   const daily = potion.schedule === "daily";
   const taken = Boolean(takenAt);
 
   return (
-    <div className={`flex items-center gap-2 p-2 ${taken ? "bg-midnight-600" : "bg-midnight-950"}`}>
-      <button
-        type="button"
-        disabled={!daily}
-        aria-pressed={daily ? taken : undefined}
-        aria-label={daily ? `${taken ? "Unmark" : "Mark"} ${potion.name} as taken` : undefined}
-        onClick={() => {
-          if (!taken) setBurst((b) => b + 1);
-          onToggle();
-        }}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-      >
-        <span key={burst} className={`relative shrink-0 ${burst ? "glow-pulse" : ""}`}>
-          <VesselSprite vessel={potion.vessel} color={potion.color} size={32} dim={daily && !taken} />
-          <SparkleBurst burstKey={burst} />
-        </span>
-        <span className="min-w-0">
-          <span className={`block leading-tight ${taken ? "text-gold-300" : "text-silver-100"}`}>{potion.name}</span>
-          <span className="block font-journal text-base leading-tight text-silver-500">
-            {potion.dose} · {taken ? `taken ${takenAt}` : displayTime(potion.time)}
-            {extras.length > 0 && ` · +${extras.length} extra (${extras.join(", ")})`}
-          </span>
-        </span>
-      </button>
-      <button
-        type="button"
-        onClick={onExtra}
-        aria-label={`Log ${daily ? "an extra" : "a"} dose of ${potion.name}`}
-        title={daily ? "Log an extra dose" : "Log a dose"}
-        className="flex size-7 shrink-0 items-center justify-center gap-0.5 bg-midnight-800 text-xs text-silver-300 hover:text-gold-300 sm:w-auto sm:px-2"
-      >
-        <Plus size={14} strokeWidth={3} />
-        <span className="hidden sm:inline">{daily ? "Extra" : "Take"}</span>
-      </button>
-      {daily && (
-        <span
-          aria-hidden
-          className={`grid size-6 shrink-0 place-items-center text-sm ${taken ? "bg-gold-500 text-midnight-950" : "bg-midnight-800 text-transparent"}`}
+    <div className={`p-2 ${taken ? "bg-midnight-600" : "bg-midnight-950"}`}>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={!daily}
+          aria-pressed={daily ? taken : undefined}
+          aria-label={daily ? `${taken ? "Unmark" : "Mark"} ${potion.name} as taken` : undefined}
+          onClick={() => {
+            if (!taken) setBurst((b) => b + 1);
+            onToggle();
+          }}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          ✓
-        </span>
+          <span key={burst} className={`relative shrink-0 ${burst ? "glow-pulse" : ""}`}>
+            <VesselSprite vessel={potion.vessel} color={potion.color} size={32} dim={daily && !taken} />
+            <SparkleBurst burstKey={burst} />
+          </span>
+          <span className="min-w-0">
+            <span className={`block leading-tight ${taken ? "text-gold-300" : "text-silver-100"}`}>{potion.name}</span>
+            <span className="block font-journal text-base leading-tight text-silver-500">
+              {potion.dose} · {taken ? `taken ${takenAt}` : displayTime(potion.time)}
+            </span>
+          </span>
+        </button>
+        <div className="flex shrink-0 items-center bg-midnight-800" role="group" aria-label={`${daily ? "Extra doses" : "Doses"} of ${potion.name}`}>
+          {extras.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={onRemoveExtra}
+                aria-label={`Remove the last ${daily ? "extra " : ""}dose of ${potion.name}`}
+                title="Remove the last dose"
+                className="grid size-7 place-items-center text-silver-300 hover:text-blood"
+              >
+                <Minus size={14} strokeWidth={3} />
+              </button>
+              <span aria-live="polite" className="min-w-4 text-center text-sm text-gold-300">
+                {extras.length}
+              </span>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={onExtra}
+            aria-label={`Log ${daily ? "an extra" : "a"} dose of ${potion.name}`}
+            title={daily ? "Log an extra dose" : "Log a dose"}
+            className="flex h-7 min-w-7 items-center justify-center gap-0.5 text-xs text-silver-300 hover:text-gold-300 sm:px-2"
+          >
+            <Plus size={14} strokeWidth={3} />
+            {extras.length === 0 && <span className="hidden sm:inline">{daily ? "Extra" : "Take"}</span>}
+          </button>
+        </div>
+        {daily && (
+          <span
+            aria-hidden
+            className={`grid size-6 shrink-0 place-items-center text-sm ${taken ? "bg-gold-500 text-midnight-950" : "bg-midnight-800 text-transparent"}`}
+          >
+            ✓
+          </span>
+        )}
+      </div>
+      {extras.length > 0 && (
+        <p className="mt-1 font-journal text-base leading-tight text-silver-500">
+          {daily ? "Extra doses" : "Taken"}: {extras.join(" · ")}
+        </p>
       )}
     </div>
   );
