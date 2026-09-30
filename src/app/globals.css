@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens — the Grimoire palette
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  /* Night sky */
+  --color-void: #07061a;
+  --color-midnight-950: #0a0924;
+  --color-midnight-900: #0f0d2e;
+  --color-midnight-800: #171441;
+  --color-midnight-700: #221d57;
+  --color-midnight-600: #2f2873;
+  --color-charcoal: #1b1a24;
+
+  /* Arcane violet */
+  --color-violet-900: #24163f;
+  --color-violet-700: #3a2470;
+  --color-violet-500: #6b44b8;
+  --color-violet-300: #a88ef0;
+  --color-violet-100: #e4dbff;
+
+  /* Gold — your personal Tide, highlights, sparkles */
+  --color-gold-100: #fff4c2;
+  --color-gold-300: #ffd866;
+  --color-gold-500: #f2b33d;
+  --color-gold-700: #b07a1c;
+  --color-gold-900: #5c3d0c;
+
+  /* Silver — the real Sky Moon */
+  --color-silver-100: #eef3ff;
+  --color-silver-300: #c3cfea;
+  --color-silver-500: #8a9bc4;
+  --color-silver-700: #56648a;
+
+  /* Parchment — the Book & Quill */
+  --color-parchment-100: #f6ead0;
+  --color-parchment-300: #e6cfa0;
+  --color-parchment-500: #c9a86a;
+  --color-parchment-700: #8c6b3a;
+  --color-ink: #3a2718;
+
+  /* Elements */
+  --color-fire: #e8553d;
+  --color-water: #3fa0e0;
+  --color-earth: #6fa84a;
+  --color-air: #b8c7f5;
+
+  /* Tide phases */
+  --color-tide-dark: #8e3a6e;
+  --color-tide-waxing: #4a86cf;
+  --color-tide-full: #f2d36b;
+  --color-tide-waning: #8a5bc4;
+  --color-blood: #b8324a;
+
+  /* Type */
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+  --font-journal: var(--font-vt323), ui-monospace, monospace;
+
+  /* Stepped, pixel-style animation */
+  --animate-twinkle: twinkle 3s steps(3, end) infinite;
+  --animate-float: float 4s steps(4, end) infinite;
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --px: 4px; /* one "pixel" of UI chrome */
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-void);
+}
+
+body {
+  min-height: 100dvh;
+  isolation: isolate; /* lets the -z-10 starfield sit above this background */
+  background:
+    radial-gradient(ellipse at 50% -10%, var(--color-violet-900) 0%, transparent 60%),
+    linear-gradient(180deg, var(--color-midnight-900) 0%, var(--color-void) 100%);
+  background-attachment: fixed;
+  color: var(--color-silver-100);
+  font-family: var(--font-pixel);
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+svg[shape-rendering="crispEdges"],
+.pixelated {
+  image-rendering: pixelated;
+}
+
+:focus-visible {
+  outline: var(--px) solid var(--color-gold-300);
+  outline-offset: var(--px);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Pixel frames — notched-corner borders drawn with box-shadow
+   ───────────────────────────────────────────────────────────── */
+@layer components {
+  .pixel-frame {
+    --frame: var(--color-violet-500);
+    --fill: var(--color-midnight-800);
+    --glow: transparent;
+    position: relative;
+    margin: var(--px);
+    background: var(--fill);
+    box-shadow:
+      /* notched outer border */
+      0 calc(var(--px) * -1) 0 0 var(--frame),
+      0 var(--px) 0 0 var(--frame),
+      calc(var(--px) * -1) 0 0 0 var(--frame),
+      var(--px) 0 0 0 var(--frame),
+      /* stepped glow, one pixel further out */
+      0 calc(var(--px) * -2) 0 0 var(--glow),
+      0 calc(var(--px) * 2) 0 0 var(--glow),
+      calc(var(--px) * -2) 0 0 0 var(--glow),
+      calc(var(--px) * 2) 0 0 0 var(--glow),
+      /* bevel */
+      inset var(--px) var(--px) 0 0 rgb(255 255 255 / 0.06),
+      inset calc(var(--px) * -1) calc(var(--px) * -1) 0 0 rgb(0 0 0 / 0.3);
+  }
+
+  .pixel-frame--gold {
+    --frame: var(--color-gold-500);
+    --glow: rgb(255 216 102 / 0.28);
+  }
+
+  .pixel-frame--silver {
+    --frame: var(--color-silver-500);
+    --fill: var(--color-midnight-900);
+  }
+
+  .pixel-frame--parchment {
+    --frame: var(--color-parchment-700);
+    --fill: var(--color-parchment-100);
+    color: var(--color-ink);
+  }
+
+  /* Chunky button that "presses" one pixel down */
+  .pixel-button {
+    --btn: var(--color-violet-500);
+    --btn-edge: var(--color-violet-900);
+    --btn-text: var(--color-violet-100);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: var(--px);
+    padding: 0.5rem 1rem;
+    background: var(--btn);
+    color: var(--btn-text);
+    font-family: var(--font-pixel);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    box-shadow:
+      0 calc(var(--px) * -1) 0 0 var(--btn-edge),
+      calc(var(--px) * -1) 0 0 0 var(--btn-edge),
+      var(--px) 0 0 0 var(--btn-edge),
+      0 var(--px) 0 0 var(--btn-edge),
+      0 calc(var(--px) * 2) 0 0 var(--btn-edge),
+      inset 0 var(--px) 0 0 rgb(255 255 255 / 0.18),
+      inset 0 calc(var(--px) * -1) 0 0 rgb(0 0 0 / 0.25);
+    transition: transform 60ms steps(1, end);
+  }
+
+  .pixel-button:hover {
+    filter: brightness(1.12);
+  }
+
+  .pixel-button:active {
+    transform: translateY(var(--px));
+    box-shadow:
+      0 calc(var(--px) * -1) 0 0 var(--btn-edge),
+      calc(var(--px) * -1) 0 0 0 var(--btn-edge),
+      var(--px) 0 0 0 var(--btn-edge),
+      0 var(--px) 0 0 var(--btn-edge),
+      inset 0 var(--px) 0 0 rgb(0 0 0 / 0.25);
+  }
+
+  .pixel-button--gold {
+    --btn: var(--color-gold-500);
+    --btn-edge: var(--color-gold-900);
+    --btn-text: var(--color-midnight-950);
+  }
+
+  .pixel-button--ghost {
+    --btn: var(--color-midnight-700);
+    --btn-edge: var(--color-midnight-950);
+    --btn-text: var(--color-silver-100);
+  }
+
+  /* Gold title with a hard pixel drop-shadow */
+  .pixel-title {
+    color: var(--color-gold-300);
+    text-shadow:
+      0 var(--px) 0 var(--color-gold-900),
+      0 calc(var(--px) * 2) 0 rgb(0 0 0 / 0.5);
+    letter-spacing: 0.02em;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Sparkle burst (potion check-off)
+   ───────────────────────────────────────────────────────────── */
+@keyframes sparkle-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+    opacity: 0;
+  }
+}
+
+.sparkle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+  animation: sparkle-fly 600ms steps(6, end) forwards;
+}
+
+@keyframes glow-pulse {
+  0% { filter: drop-shadow(0 0 0 transparent); }
+  30% { filter: drop-shadow(0 0 6px var(--color-gold-300)); }
+  100% { filter: drop-shadow(0 0 0 transparent); }
+}
+
+.glow-pulse {
+  animation: glow-pulse 700ms steps(5, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
