@@ -1,10 +1,8 @@
 import { VesselSprite } from "@/components/sprites/VesselSprite";
-import { PHASE_MEANING, cycleStats, tideDay } from "@/lib/cycle";
-import { formatHHMM, type DateKey } from "@/lib/dates";
+import { cycleStats } from "@/lib/cycle";
+import { formatHHMM } from "@/lib/dates";
 import { activePotions } from "@/lib/grimoire";
 import type { Grimoire } from "@/lib/types";
-import { SkyBadge, TideBadge } from "./Badges";
-import { DateNav } from "./DateNav";
 import { Section } from "./Section";
 
 /*
@@ -19,26 +17,6 @@ function StillWriting({ what }: { what: string }) {
       <br />
       <span className="text-parchment-700">(You can try it now in the layout mockup at /mockup.)</span>
     </p>
-  );
-}
-
-export function DayPlaceholder({ g, date, today, onNavigate }: { g: Grimoire; date: DateKey; today: DateKey; onNavigate: (d: DateKey) => void }) {
-  const tide = tideDay(date, g.tides, g.settings, today);
-  return (
-    <div className="space-y-4">
-      <DateNav date={date} today={today} onNavigate={onNavigate} />
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        {g.settings.cycleTracking && (
-          <TideBadge
-            tide={tide}
-            size={48}
-            lines={tide ? [`${tide.predicted ? "Predicted · " : ""}Day ${tide.cycleDay}`, PHASE_MEANING[tide.phase]] : ["No tide logged yet"]}
-          />
-        )}
-        <SkyBadge date={date} />
-      </div>
-      <StillWriting what="The daily page (tide, elements, potions, and journal)" />
-    </div>
   );
 }
 

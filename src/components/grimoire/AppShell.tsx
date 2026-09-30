@@ -11,7 +11,8 @@ import type { Grimoire } from "@/lib/types";
 import { CalendarView } from "./CalendarView";
 import { Cover } from "./Cover";
 import { Onboarding } from "./Onboarding";
-import { CabinetPlaceholder, DayPlaceholder, JournalPlaceholder, SettingsPlaceholder } from "./Placeholders";
+import { DayView } from "./DayView";
+import { CabinetPlaceholder, JournalPlaceholder, SettingsPlaceholder } from "./Placeholders";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
 
 function Loading() {
@@ -104,7 +105,17 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
               />
             )}
             {coverOpen && view === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
-            {coverOpen && view === "day" && <DayPlaceholder g={g} date={selected} today={today} onNavigate={(d) => open(d, "day")} />}
+            {coverOpen && view === "day" && (
+              <DayView
+                key={selected}
+                g={g}
+                date={selected}
+                today={today}
+                onNavigate={(d) => open(d, "day")}
+                onOpenJournal={() => open(selected, "journal")}
+                onOpenCabinet={() => open(selected, "cabinet")}
+              />
+            )}
             {coverOpen && view === "journal" && <JournalPlaceholder />}
             {coverOpen && view === "cabinet" && <CabinetPlaceholder g={g} />}
             {coverOpen && view === "settings" && <SettingsPlaceholder g={g} />}
