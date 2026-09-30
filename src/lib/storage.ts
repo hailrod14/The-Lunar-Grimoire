@@ -42,6 +42,7 @@ function sanitizeSettings(v: unknown): Settings {
     defaultPeriodLength: numberIn(s.defaultPeriodLength, 1, 15, DEFAULT_SETTINGS.defaultPeriodLength),
     onboarded: typeof s.onboarded === "boolean" ? s.onboarded : DEFAULT_SETTINGS.onboarded,
     soundEnabled: typeof s.soundEnabled === "boolean" ? s.soundEnabled : DEFAULT_SETTINGS.soundEnabled,
+    lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
   };
 }
 

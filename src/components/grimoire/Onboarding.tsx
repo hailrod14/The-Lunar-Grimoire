@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import { usePageTurn } from "@/components/pixel/usePageTurn";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 import { MAX_TIDE_DAYS } from "@/lib/cycle";
 import { addDaysKey, formatHHMM, type DateKey } from "@/lib/dates";
 import { completeOnboarding } from "@/lib/grimoire";
-import { dispatch } from "@/lib/store";
+import { parseGrimoireFile } from "@/lib/storage";
+import { dispatch, replaceGrimoire } from "@/lib/store";
+import { Choice, Stepper } from "./Controls";
 import { BLANK_POTION, PotionForm, type PotionDraft } from "./PotionForm";
 import { Section } from "./Section";
 
@@ -16,35 +18,6 @@ const PAGES = ["Welcome", "Your last tide", "Your rhythm", "Your cabinet"] as co
 
 const dateInput =
   "pixel-frame block w-[calc(100%-8px)] bg-midnight-950 px-3 py-2 font-journal text-xl text-silver-100 focus:outline-none";
-
-function Choice({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={`w-full px-3 py-2 text-left ${selected ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-300 hover:bg-midnight-700"}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Stepper({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (n: number) => void }) {
-  return (
-    <div className="flex items-center gap-2" role="group" aria-label={label}>
-      <button type="button" aria-label={`Fewer ${unit}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
-        <Minus size={16} strokeWidth={3} />
-      </button>
-      <span aria-live="polite" className="min-w-24 text-center text-2xl text-gold-300">
-        {value} <span className="font-journal text-xl text-silver-300">{unit}</span>
-      </span>
-      <button type="button" aria-label={`More ${unit}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
-        <Plus size={16} strokeWidth={3} />
-      </button>
-    </div>
-  );
-}
 
 export function Onboarding({ today }: { today: DateKey }) {
   const [page, setPage] = useState(0);
@@ -127,6 +100,7 @@ export function Onboarding({ today }: { today: DateKey }) {
               <p className="font-journal text-base text-silver-500">
                 A reflection tool, not a medical device. Predictions are estimates, never for contraception.
               </p>
+              <RestoreBackup />
             </div>
           )}
 
@@ -269,5 +243,42 @@ export function Onboarding({ today }: { today: DateKey }) {
         {overlay}
       </div>
     </main>
+  );
+}
+
+/** For a new device or the installed app: skip the ritual by restoring an exported Grimoire. */
+function RestoreBackup() {
+  const input = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const restore = async (file: File) => {
+    const parsed = parseGrimoireFile(await file.text());
+    if (!parsed.ok) return setError(parsed.error);
+    replaceGrimoire({ ...parsed.grimoire, settings: { ...parsed.grimoire.settings, onboarded: true } });
+  };
+
+  return (
+    <div className="space-y-1">
+      <button type="button" onClick={() => input.current?.click()} className="pixel-button pixel-button--ghost">
+        <Upload size={16} /> Restore from a backup
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        aria-label="Choose a Grimoire backup file"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) restore(file);
+          e.target.value = "";
+        }}
+      />
+      {error && (
+        <p role="alert" className="font-journal text-lg text-fire">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

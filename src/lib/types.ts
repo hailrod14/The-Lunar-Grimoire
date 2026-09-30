@@ -23,6 +23,8 @@ export type Settings = {
   defaultPeriodLength: number;
   onboarded: boolean;
   soundEnabled: boolean;
+  /** When the Grimoire was last exported, as an ISO timestamp ("" = never). */
+  lastBackupAt: string;
 };
 
 /** One period. `end` is missing while the tide is still flowing. */
@@ -74,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultPeriodLength: 5,
   onboarded: false,
   soundEnabled: true,
+  lastBackupAt: "",
 };
 
 export const emptyDay = (): DayEntry => ({

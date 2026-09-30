@@ -9,6 +9,8 @@ const vt323 = VT323({ subsets: ["latin"], weight: "400", variable: "--font-vt323
 export const metadata: Metadata = {
   title: "The Lunar Grimoire",
   description: "A witchy, pixel-art cycle, potion & mood tracker — your private celestial grimoire.",
+  applicationName: "The Lunar Grimoire",
+  appleWebApp: { capable: true, title: "Grimoire", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

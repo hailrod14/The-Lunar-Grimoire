@@ -79,7 +79,13 @@ A three-page setup when you first open the app:
 3. **Stock your cabinet:** add your first potions. You can skip this step.
 
 ### 💾 Export / Import Grimoire
-Back up everything to a `.json` file and restore it on any device. Import checks the file and asks before overwriting anything.
+Back up everything to a `.json` file and restore it on any device. Import checks the file and asks before overwriting anything. On a new device, choose **Restore from a backup** on the welcome page to skip setup. Settings shows when you last backed up.
+
+### ⚙️ Settings
+- Turn cycle tracking on or off (your tide history is kept either way).
+- See whether your rhythm is learned or estimated, and adjust your estimates.
+- **Tide history:** edit or delete any logged tide, or add past tides so the Grimoire learns your rhythm sooner.
+- Start over by erasing the Grimoire (with a confirmation).
 
 ### 📱 Works Everywhere, Even Offline
 The Grimoire is a **Progressive Web App (PWA)**:
@@ -111,6 +117,7 @@ The Grimoire is a **Progressive Web App (PWA)**:
 - Anyone with access to your browser profile can open the app and see your data.
 - **Clearing your browser data permanently deletes your Grimoire.** Export a backup regularly.
 - Data does not sync between devices automatically. Use Export and Import to move it.
+- **On iPhone and iPad, the home-screen app keeps its own separate storage from Safari.** Export in Safari, then Import in the installed app.
 
 ---
 
@@ -170,7 +177,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] First-run ritual and the Calendar home (Your Tide + Sky Moon header)
 - [x] The daily page: tide & flow, Mood Elements, potions, and journal
 - [x] The Book & Quill and the Potion & Elixir Cabinet
-- [ ] Tide history editing, Export / Import, PWA install, and offline support
+- [x] Settings, tide history editing, Export / Import, PWA install, and offline support
 - [ ] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
 
 **Phase 2: Ideas**

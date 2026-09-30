@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activePotions,
   addDose,
+  addTide,
   archivePotion,
   deletePotion,
   potionHasHistory,
@@ -81,6 +82,18 @@ describe("tides", () => {
     expect(editTide(g, second, { start: "2026-08-04", end: "2026-08-08" })).toBe(g);
     expect(editTide(g, second, { start: "2026-09-05", end: "2026-09-01" })).toBe(g);
     expect(starts(editTide(g, second, { start: "2026-08-30", end: "2026-09-03" }))[1]).toEqual(["2026-08-30", "2026-09-03"]);
+  });
+
+  it("adds past tides, rejecting overlaps and impossible dates", () => {
+    let g = addTide(newGrimoire(), "2026-08-01", "2026-08-05");
+    g = addTide(g, "2026-07-03", "2026-07-07");
+    expect(starts(g)).toEqual([
+      ["2026-07-03", "2026-07-07"],
+      ["2026-08-01", "2026-08-05"],
+    ]);
+    expect(addTide(g, "2026-08-04", "2026-08-09")).toBe(g); // overlaps
+    expect(addTide(g, "2026-09-05", "2026-09-01")).toBe(g); // ends before it starts
+    expect(addTide(g, "2026-09-01", "2026-09-20")).toBe(g); // longer than a tide can be
   });
 
   it("sets and clears a day's flow", () => {

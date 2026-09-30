@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePageTurn, type TurnDirection } from "@/components/pixel/usePageTurn";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { tideDay } from "@/lib/cycle";
 import { diffKeys, type DateKey } from "@/lib/dates";
+import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
 import { dismissLoadProblem, useGrimoireState } from "@/lib/store";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
@@ -14,7 +15,7 @@ import { Onboarding } from "./Onboarding";
 import { CabinetView } from "./CabinetView";
 import { DayView } from "./DayView";
 import { JournalView } from "./JournalView";
-import { SettingsPlaceholder } from "./Placeholders";
+import { SettingsView } from "./SettingsView";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
 
 function Loading() {
@@ -29,6 +30,10 @@ function Loading() {
 }
 
 export function AppShell() {
+  useEffect(() => {
+    listenForInstallPrompt();
+    registerServiceWorker();
+  }, []);
   const state = useGrimoireState();
   const today = useToday();
   if (!state || !today) return <Loading />;
@@ -122,7 +127,7 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
               <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />
             )}
             {coverOpen && view === "cabinet" && <CabinetView g={g} />}
-            {coverOpen && view === "settings" && <SettingsPlaceholder g={g} />}
+            {coverOpen && view === "settings" && <SettingsView g={g} today={today} />}
           </div>
           {overlay}
         </div>

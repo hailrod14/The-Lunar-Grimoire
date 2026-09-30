@@ -96,14 +96,23 @@ export function reopenTide(g: Grimoire, id: string): Grimoire {
   };
 }
 
+/** True if a tide spanning these dates would overlap any tide other than `ignoreId`. */
+function overlapsAnother(tides: Tide[], dates: { start: DateKey; end?: DateKey }, ignoreId?: string): boolean {
+  const lastDay = dates.end ?? dates.start;
+  return tides.some((t) => t.id !== ignoreId && t.start <= lastDay && (t.end ?? t.start) >= dates.start);
+}
+
+/** Record a past tide from Settings. Rejects tides that end before they start, run too long, or overlap. */
+export function addTide(g: Grimoire, start: DateKey, end: DateKey): Grimoire {
+  if (end < start || diffKeys(end, start) >= MAX_TIDE_DAYS) return g;
+  if (overlapsAnother(g.tides, { start, end })) return g;
+  return { ...g, tides: sortTides([...g.tides, { id: newId(), start, end }]) };
+}
+
 /** Edit a tide's dates from the Archive. Rejects edits that end before they start or overlap another tide. */
 export function editTide(g: Grimoire, id: string, dates: { start: DateKey; end?: DateKey }): Grimoire {
-  if (dates.end && dates.end < dates.start) return g;
-  const lastDay = dates.end ?? dates.start;
-  const overlaps = g.tides.some(
-    (t) => t.id !== id && t.start <= lastDay && (t.end ?? t.start) >= dates.start,
-  );
-  if (overlaps) return g;
+  if (dates.end && (dates.end < dates.start || diffKeys(dates.end, dates.start) >= MAX_TIDE_DAYS)) return g;
+  if (overlapsAnother(g.tides, dates, id)) return g;
   const tides = g.tides.map((t) => (t.id === id ? { id, ...dates } : t));
   return { ...g, tides: sortTides(tides) };
 }
