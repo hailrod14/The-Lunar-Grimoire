@@ -1,0 +1,21 @@
+{
+  "name": "the-lunar-grimoire",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A witchy, pixel-art cycle, potion & mood tracker — your private celestial grimoire.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "npx serve@latest out",
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "lucide-react": "^1.49.0",
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}
