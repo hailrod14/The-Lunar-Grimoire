@@ -1,4 +1,3 @@
-````markdown
 # 🌙 The Lunar Grimoire
 
 *A witchy menstrual, medication, and mood tracker, bound as a pixel-art celestial grimoire.*
@@ -7,7 +6,7 @@ The Lunar Grimoire turns your cycle into a personal **Lunar Tide**, your moods i
 
 > 🔒 **Your data never leaves your device.** There are no accounts, no servers, and no tracking or analytics. Everything is stored locally in your browser.
 
-**🔮 Live app:** https://<your-username>.github.io/<repo-name>/
+**🔮 Live app:** https://hailrod14.github.io/The-Lunar-Grimoire/
 
 > 🚧 **Status:** Phase 1 (MVP) is in active development.
 
@@ -134,8 +133,8 @@ The Grimoire is a **Progressive Web App (PWA)**:
 **Requirements:** Node.js 20+ and npm.
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/hailrod14/The-Lunar-Grimoire.git
+cd The-Lunar-Grimoire
 npm install
 npm run dev
 ```
@@ -158,7 +157,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 **One-time setup:**
 1. In your repository, go to **Settings → Pages**.
 2. Under **Source**, select **GitHub Actions**.
-3. Push to `main`. The site will be published at `https://<your-username>.github.io/<repo-name>/`.
+3. Push to `main`. The site will be published at `https://hailrod14.github.io/The-Lunar-Grimoire/`.
 
 ---
 
@@ -188,10 +187,3 @@ MIT. See [LICENSE](LICENSE).
 ---
 
 *Made with moonlight, stardust, and a little bit of code.* 🌙✨
-````
-
-I made a few choices you may want to change:
-- **Name:** I called the app "The Lunar Grimoire." Swap it if you have another name in mind.
-- **Medical disclaimer:** I added a note saying the app isn't for contraception. I strongly recommend keeping it for any public cycle-tracking app.
-- **License:** I picked MIT. Change it if you'd rather keep the code more restricted.
-- **Symptom tracking in Phase 2:** this is my suggestion, not something you asked for. Remove it if you don't want it.
