@@ -16,7 +16,7 @@ const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[
 ];
 
 /** Bookmark ribbons hanging off the right edge of the book. */
-export function Ribbons({ active, dayLabel, onSelect }: { active: View; dayLabel: string; onSelect: (v: View) => void }) {
+export function Ribbons({ active, dayLabel, onSelect }: { active: View | null; dayLabel: string; onSelect: (v: View) => void }) {
   return (
     <nav aria-label="Grimoire sections" className="sticky top-4 flex shrink-0 flex-col gap-2 pt-8">
       {RIBBONS.map((r) => {

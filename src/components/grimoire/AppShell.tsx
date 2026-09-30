@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { usePageTurn, type TurnDirection } from "@/components/pixel/usePageTurn";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
+import { tideDay } from "@/lib/cycle";
 import { diffKeys, type DateKey } from "@/lib/dates";
 import { dismissLoadProblem, useGrimoireState } from "@/lib/store";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
 import { CalendarView } from "./CalendarView";
+import { Cover } from "./Cover";
 import { Onboarding } from "./Onboarding";
 import { CabinetPlaceholder, DayPlaceholder, JournalPlaceholder, SettingsPlaceholder } from "./Placeholders";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
@@ -59,9 +61,19 @@ export function AppShell() {
 function Book({ g, today }: { g: Grimoire; today: DateKey }) {
   const [view, setView] = useState<View>("calendar");
   const [selected, setSelected] = useState<DateKey>(today);
+  // The book opens closed, on its cover; the calendar is the first page.
+  const [coverOpen, setCoverOpen] = useState(false);
   const { pageRef, overlay, turn } = usePageTurn();
 
   const open = (date: DateKey, v: View = "day") => {
+    if (!coverOpen) {
+      turn("forward", () => {
+        setCoverOpen(true);
+        setSelected(date);
+        setView(v);
+      });
+      return;
+    }
     if (v === view && date === selected) return;
     // Later sections and later days turn forward; earlier ones turn back.
     const dir: TurnDirection =
@@ -82,16 +94,24 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
     <main className="mx-auto max-w-2xl px-4 py-4 pb-16">
       <div className="flex items-start">
         <div className="pixel-frame pixel-frame--gold min-h-[85dvh] min-w-0 flex-1">
-          <div ref={pageRef} className="p-3 sm:p-5">
-            {view === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
-            {view === "day" && <DayPlaceholder g={g} date={selected} today={today} onNavigate={(d) => open(d, "day")} />}
-            {view === "journal" && <JournalPlaceholder />}
-            {view === "cabinet" && <CabinetPlaceholder g={g} />}
-            {view === "settings" && <SettingsPlaceholder g={g} />}
+          <div ref={pageRef} className={coverOpen ? "p-3 sm:p-5" : ""}>
+            {!coverOpen && (
+              <Cover
+                tide={tideDay(today, g.tides, g.settings, today)}
+                tracking={g.settings.cycleTracking}
+                today={today}
+                onOpen={() => open(today, "calendar")}
+              />
+            )}
+            {coverOpen && view === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
+            {coverOpen && view === "day" && <DayPlaceholder g={g} date={selected} today={today} onNavigate={(d) => open(d, "day")} />}
+            {coverOpen && view === "journal" && <JournalPlaceholder />}
+            {coverOpen && view === "cabinet" && <CabinetPlaceholder g={g} />}
+            {coverOpen && view === "settings" && <SettingsPlaceholder g={g} />}
           </div>
           {overlay}
         </div>
-        <Ribbons active={view} dayLabel={view === "day" && selected !== today ? "Day" : "Today"} onSelect={onRibbon} />
+        <Ribbons active={coverOpen ? view : null} dayLabel={view === "day" && selected !== today ? "Day" : "Today"} onSelect={onRibbon} />
       </div>
     </main>
   );
