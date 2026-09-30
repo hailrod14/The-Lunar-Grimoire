@@ -1,6 +1,8 @@
 import { PixelSprite } from "@/components/pixel/PixelSprite";
 
-export type Element = "fire" | "water" | "earth" | "air";
+import type { Element } from "@/lib/elements";
+
+export type { Element };
 
 const SPRITES: Record<Element, { rows: string[]; palette: Record<string, string> }> = {
   fire: {

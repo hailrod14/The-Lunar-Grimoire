@@ -1,4 +1,4 @@
-import type { LiquidColor, Vessel } from "@/components/sprites/VesselSprite";
+import type { LiquidColor, Vessel } from "@/lib/potions";
 import { addDays, dateKey, diffDays } from "@/lib/dates";
 import { ELEMENTS, type ElementLog, type TimeBlock } from "@/lib/elements";
 

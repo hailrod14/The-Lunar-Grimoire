@@ -1,5 +1,4 @@
-import type { Element } from "@/components/sprites/ElementSprite";
-
+export type Element = "fire" | "water" | "earth" | "air";
 export type Aspect = "light" | "shadow" | "mixed";
 export type TimeBlock = "morning" | "afternoon" | "night";
 

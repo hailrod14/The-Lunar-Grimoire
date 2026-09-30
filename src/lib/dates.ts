@@ -2,7 +2,27 @@
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export const dateKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/** A local calendar day, "YYYY-MM-DD". */
+export type DateKey = string;
+
+export const dateKey = (d: Date): DateKey => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+/** "2026-09-30" → local midnight on that day. */
+export function parseKey(key: DateKey): Date {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** True for a real calendar date written as "YYYY-MM-DD". */
+export function isDateKey(value: unknown): value is DateKey {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return dateKey(parseKey(value)) === value;
+}
+
+/** Whole days from key `b` to key `a`. */
+export const diffKeys = (a: DateKey, b: DateKey) => diffDays(parseKey(a), parseKey(b));
+
+export const addDaysKey = (key: DateKey, n: number): DateKey => dateKey(addDays(parseKey(key), n));
 
 export const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 

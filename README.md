@@ -164,13 +164,14 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 ## 🗺️ Roadmap
 
 **Phase 1: MVP** *(in progress)*
-- [ ] Project setup, pixel design system, and deployment
-- [ ] Data storage layer, cycle math, and moon math
-- [ ] First-run ritual and Lunar Dashboard
-- [ ] Mood Elements and the Book & Quill journal
-- [ ] Potion & Elixir Cabinet with sparkle effects
-- [ ] Grimoire Archive calendar and day editor
-- [ ] Export / Import, PWA install, and offline support
+- [x] Project setup, pixel design system, and deployment
+- [x] Clickable layout mockup: calendar home, bookmark ribbons, page turns
+- [x] Data storage, cycle math, and moon math, with tests
+- [ ] First-run ritual and the Calendar home (Your Tide + Sky Moon header)
+- [ ] The daily page: tide & flow, Mood Elements, potions, and journal
+- [ ] The Book & Quill and the Potion & Elixir Cabinet
+- [ ] Tide history editing, Export / Import, PWA install, and offline support
+- [ ] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
 
 **Phase 2: Ideas**
 - [ ] Optional PIN lock screen
