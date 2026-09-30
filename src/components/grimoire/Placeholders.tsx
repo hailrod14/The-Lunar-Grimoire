@@ -1,7 +1,4 @@
-import { VesselSprite } from "@/components/sprites/VesselSprite";
 import { cycleStats } from "@/lib/cycle";
-import { formatHHMM } from "@/lib/dates";
-import { activePotions } from "@/lib/grimoire";
 import type { Grimoire } from "@/lib/types";
 import { Section } from "./Section";
 
@@ -17,43 +14,6 @@ function StillWriting({ what }: { what: string }) {
       <br />
       <span className="text-parchment-700">(You can try it now in the layout mockup at /mockup.)</span>
     </p>
-  );
-}
-
-export function JournalPlaceholder() {
-  return (
-    <div className="space-y-4">
-      <h2 className="pixel-title text-center text-2xl">The Book &amp; Quill</h2>
-      <StillWriting what="The Book & Quill" />
-    </div>
-  );
-}
-
-export function CabinetPlaceholder({ g }: { g: Grimoire }) {
-  const potions = activePotions(g);
-  return (
-    <div className="space-y-4">
-      <h2 className="pixel-title text-center text-2xl">Potion &amp; Elixir Cabinet</h2>
-      {potions.length === 0 ? (
-        <p className="text-center font-journal text-xl text-silver-300">Your cabinet is empty.</p>
-      ) : (
-        <ul className="space-y-2">
-          {potions.map((p) => (
-            <li key={p.id} className="pixel-frame flex items-center gap-3 p-3">
-              <VesselSprite vessel={p.vessel} color={p.color} size={40} />
-              <div>
-                <p className="text-silver-100">{p.name}</p>
-                <p className="font-journal text-lg leading-tight text-silver-500">
-                  {p.dose && `${p.dose} · `}
-                  {p.schedule === "daily" ? `daily at ${formatHHMM(p.time)}` : "as needed"}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <StillWriting what="Brewing and editing potions" />
-    </div>
   );
 }
 

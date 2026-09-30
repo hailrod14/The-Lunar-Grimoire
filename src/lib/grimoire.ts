@@ -156,6 +156,19 @@ export function savePotion(g: Grimoire, potion: Omit<Potion, "id"> & { id?: stri
   return { ...g, potions: [...g.potions, { ...potion, id: newId() }] };
 }
 
+/** True if any day has a dose of this potion logged. */
+export const potionHasHistory = (g: Grimoire, id: string) =>
+  Object.values(g.days).some((d) => d.potionLogs.some((l) => l.potionId === id));
+
+/**
+ * Remove a potion that was never taken. Potions with history can't be
+ * deleted this way, only retired, so past days are never rewritten.
+ */
+export function deletePotion(g: Grimoire, id: string): Grimoire {
+  if (potionHasHistory(g, id)) return g;
+  return { ...g, potions: g.potions.filter((p) => p.id !== id) };
+}
+
 /** Retire a potion from the cabinet. Its past doses stay in the Archive. */
 export const archivePotion = (g: Grimoire, id: string, archived = true): Grimoire => ({
   ...g,

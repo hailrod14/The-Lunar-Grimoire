@@ -3,6 +3,8 @@ import {
   activePotions,
   addDose,
   archivePotion,
+  deletePotion,
+  potionHasHistory,
   beginTide,
   completeOnboarding,
   editTide,
@@ -128,6 +130,14 @@ describe("potions", () => {
     const g = archivePotion(togglePotion(g0, "2026-09-30", id, "09:04"), id);
     expect(activePotions(g)).toEqual([]);
     expect(getDay(g, "2026-09-30").potionLogs).toHaveLength(1);
+  });
+
+  it("deletes a potion only if it was never taken", () => {
+    const [g0, id] = withPotion();
+    expect(deletePotion(g0, id).potions).toEqual([]);
+    const g1 = togglePotion(g0, "2026-09-30", id, "09:04");
+    expect(potionHasHistory(g1, id)).toBe(true);
+    expect(deletePotion(g1, id)).toBe(g1);
   });
 
   it("ignores doses for a potion that doesn't exist", () => {

@@ -169,7 +169,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Data storage, cycle math, and moon math, with tests
 - [x] First-run ritual and the Calendar home (Your Tide + Sky Moon header)
 - [x] The daily page: tide & flow, Mood Elements, potions, and journal
-- [ ] The Book & Quill and the Potion & Elixir Cabinet
+- [x] The Book & Quill and the Potion & Elixir Cabinet
 - [ ] Tide history editing, Export / Import, PWA install, and offline support
 - [ ] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
 
