@@ -1,6 +1,6 @@
 import { MAX_TIDE_DAYS, cycleStats, sortTides } from "./cycle";
 import { addDaysKey, diffKeys, type DateKey } from "./dates";
-import type { ElementLog, TimeBlock } from "./elements";
+import type { Element, ElementLog, TimeBlock } from "./elements";
 import { emptyDay, type DayEntry, type Flow, type Grimoire, type Potion, type Settings, type Tide } from "./types";
 
 /*
@@ -29,6 +29,13 @@ export const setFlow = (g: Grimoire, date: DateKey, flow: Flow | undefined) =>
 
 export const setElements = (g: Grimoire, date: DateKey, block: TimeBlock, logs: ElementLog[]) =>
   updateDay(g, date, (d) => ({ ...d, elements: { ...d.elements, [block]: logs } }));
+
+/** The distinct elements logged across a day's morning, afternoon, and night. */
+export function loggedElements(day?: DayEntry): Element[] {
+  if (!day) return [];
+  const all = [...day.elements.morning, ...day.elements.afternoon, ...day.elements.night].map((e) => e.element);
+  return [...new Set(all)];
+}
 
 export const setJournal = (g: Grimoire, date: DateKey, journal: string) =>
   updateDay(g, date, (d) => ({ ...d, journal }));

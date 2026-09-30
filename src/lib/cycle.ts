@@ -40,6 +40,8 @@ const PERIOD_LIMITS = [2, 10] as const;
 /** Gaps outside this range are probably a missed log, not a real cycle. */
 const PLAUSIBLE_CYCLE = [15, 60] as const;
 const PLAUSIBLE_PERIOD = [1, 15] as const;
+/** Cycles longer than this multiple of the typical one are treated as a skipped tide. */
+const SKIPPED_TIDE_FACTOR = 1.5;
 /** Ask "Has your tide ended?" once an open tide reaches this many days. */
 export const END_CHECK_DAYS = 10;
 /** No tide runs longer than this; a forgotten open tide stops here. */
@@ -48,6 +50,11 @@ export const MAX_TIDE_DAYS = 15;
 const clamp = (n: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, n));
 const within = (n: number, [lo, hi]: readonly [number, number]) => n >= lo && n <= hi;
 const average = (ns: number[]) => ns.reduce((a, b) => a + b, 0) / ns.length;
+const median = (ns: number[]) => {
+  const sorted = [...ns].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
 
 export const sortTides = (tides: Tide[]) => [...tides].sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
 
@@ -65,11 +72,14 @@ export type CycleStats = {
 export function cycleStats(tides: Tide[], settings: Settings): CycleStats {
   const sorted = sortTides(tides);
 
-  const cycles = sorted
+  const recent = sorted
     .slice(1)
     .map((t, i) => diffKeys(t.start, sorted[i].start))
     .filter((n) => within(n, PLAUSIBLE_CYCLE))
     .slice(-MAX_CYCLES_TO_LEARN);
+  // A cycle far longer than usual is most likely a skipped tide; leave it out.
+  const typical = median(recent);
+  const cycles = recent.filter((n) => n <= typical * SKIPPED_TIDE_FACTOR);
 
   const periods = sorted
     .map(tideLength)

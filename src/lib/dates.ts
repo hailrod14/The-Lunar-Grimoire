@@ -58,3 +58,12 @@ export function monthGrid(month: Date): (Date | null)[][] {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
 }
+
+/** The current local time as "HH:MM". */
+export const nowTime = (d = new Date()) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+/** "20:00" → "8:00 pm". */
+export function formatHHMM(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}:${pad(m)} ${h < 12 ? "am" : "pm"}`;
+}

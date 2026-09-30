@@ -38,6 +38,12 @@ describe("cycleStats", () => {
     expect(stats.cyclesLearned).toBe(3);
   });
 
+  it("leaves a skipped month out of the average", () => {
+    const stats = cycleStats(tidesWithGaps("2026-01-01", [28, 29, 57, 28, 27]), settings);
+    expect(stats.cycleLength).toBe(28);
+    expect(stats.cyclesLearned).toBe(4);
+  });
+
   it("keeps learned lengths within sensible limits", () => {
     expect(cycleStats(tidesWithGaps("2026-01-01", [55, 55, 55]), settings).cycleLength).toBe(45);
     expect(cycleStats(tidesWithGaps("2026-01-01", [16, 16, 16]), settings).cycleLength).toBe(21);
