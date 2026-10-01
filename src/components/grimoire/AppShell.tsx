@@ -11,6 +11,7 @@ import { updateSettings } from "@/lib/grimoire";
 import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { applyTheme, resolveTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { usePushSync } from "@/lib/push";
 import { startSync } from "@/lib/sync";
 import { useReminderNotifications } from "@/lib/useReminders";
 import { useToday } from "@/lib/useToday";
@@ -61,6 +62,7 @@ export function AppShell() {
   }, [musicOn]);
   useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
   useReminderNotifications(Boolean(open?.grimoire.settings.onboarded));
+  usePushSync(open?.grimoire ?? null, today);
 
   // Sync, if it's set up on this device, starts once the Grimoire is open (after the PIN, if any).
   const isOpen = open !== null;

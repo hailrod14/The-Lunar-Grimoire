@@ -42,6 +42,8 @@ export type Settings = {
   lastBackupAt: string;
   /** Whose public holidays and observances show on the calendar. */
   holidayRegion: HolidayRegion;
+  /** A random id shared by this Grimoire's devices for home-screen reminders ("" = never set up). */
+  pushGroup: string;
 };
 
 /** One period. `end` is missing while the tide is still flowing. */
@@ -177,6 +179,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hemisphere: "north",
   lastBackupAt: "",
   holidayRegion: "us",
+  pushGroup: "",
 };
 
 export const emptyDay = (): DayEntry => ({

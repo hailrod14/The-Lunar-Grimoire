@@ -8,6 +8,8 @@ import { isAppleMobile, isInstalled } from "@/lib/pwa";
 import { remindersCalendar } from "@/lib/reminders";
 import { dispatch } from "@/lib/store";
 import type { Grimoire } from "@/lib/types";
+import { disablePush, enablePush, pushSupported, ringTimes, usePushEnabled } from "@/lib/push";
+import { PUSH_AVAILABLE } from "@/lib/push-config";
 import { notificationsSupported } from "@/lib/useReminders";
 import { Choice } from "./Controls";
 import { Section } from "./Section";
@@ -29,11 +31,16 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
   const daily = g.potions.filter((p) => p.schedule !== "as-needed" && !p.archived);
   const reminded = daily.filter((p) => p.reminder);
   const showNames = g.settings.reminderNames;
+  const pushOn = usePushEnabled();
+  const [pushProblem, setPushProblem] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   return (
     <Section title="Potion reminders">
       <p className="font-journal text-lg text-silver-300">
-        The Grimoire reminds you while it&apos;s open. For reminders when it&apos;s closed, add them to your phone&apos;s calendar.
+        {PUSH_AVAILABLE
+          ? "Turn on home-screen reminders below and this device is reminded at each time, even with the Grimoire closed."
+          : "The Grimoire reminds you while it's open. For reminders when it's closed, add them to your phone's calendar."}
       </p>
 
       {daily.length === 0 ? (
@@ -64,8 +71,55 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
         The potion&apos;s name and dose
       </Choice>
 
-      <p className="pt-1 text-sm text-silver-300">While the Grimoire is open</p>
-      {permission === "granted" ? (
+      {PUSH_AVAILABLE && (
+        <div className="space-y-2 bg-midnight-950 p-3">
+          <p className="text-sm text-silver-100">🔔 Home-screen reminders on this device</p>
+          {!pushSupported() ? (
+            <p className="font-journal text-lg text-silver-500">
+              {isAppleMobile() && !isInstalled()
+                ? "On iPhone and iPad, add the Grimoire to your home screen first."
+                : "This browser can't receive reminders while closed. The calendar option below still works."}
+            </p>
+          ) : pushOn ? (
+            <>
+              <p className="font-journal text-lg text-silver-300">
+                ✓ On. {reminded.length ? `Rings at ${ringTimes(g)}, unless you've already checked the dose off.` : "Turn on a reminder above to choose when it rings."}
+              </p>
+              <button type="button" onClick={() => void disablePush()} className="pixel-button pixel-button--ghost">
+                Turn off on this device
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="font-journal text-base text-silver-500">
+                A small reminder service learns only the times to ring, never what your potions are. Turn this on for each device you want
+                reminded.
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setPushProblem(await enablePush());
+                  setBusy(false);
+                  setPermission(notificationsSupported() ? Notification.permission : "unsupported");
+                }}
+                className="pixel-button pixel-button--gold disabled:opacity-40"
+              >
+                🔔 Remind me here, even when closed
+              </button>
+            </>
+          )}
+          {pushProblem && (
+            <p role="alert" className="font-journal text-lg text-gold-300">
+              {pushProblem}
+            </p>
+          )}
+        </div>
+      )}
+
+      {!(PUSH_AVAILABLE && pushOn) && <p className="pt-1 text-sm text-silver-300">While the Grimoire is open</p>}
+      {PUSH_AVAILABLE && pushOn ? null : permission === "granted" ? (
         <p className="font-journal text-lg text-silver-300">✓ Notifications are on.</p>
       ) : permission === "denied" ? (
         <p className="font-journal text-lg text-silver-500">Notifications are blocked. You can allow them in your browser&apos;s site settings.</p>
@@ -85,7 +139,7 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
         </button>
       )}
 
-      <p className="pt-1 text-sm text-silver-300">Even when it&apos;s closed</p>
+      <p className="pt-1 text-sm text-silver-300">{PUSH_AVAILABLE ? "Or in your phone's calendar" : "Even when it's closed"}</p>
       <button
         type="button"
         disabled={reminded.length === 0}

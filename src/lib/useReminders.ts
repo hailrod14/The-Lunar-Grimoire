@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { dateKey, nowTime, type DateKey } from "./dates";
 import { dueReminders, reminderMessage } from "./reminders";
+import { pushEnabledHere } from "./push";
 import { getGrimoire } from "./store";
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -43,6 +44,7 @@ export function useReminderNotifications(enabled: boolean) {
     if (!enabled) return;
     const check = () => {
       if (!notificationsSupported() || Notification.permission !== "granted") return;
+      if (pushEnabledHere()) return; // The reminder bell rings this device, open or closed.
       const g = getGrimoire();
       if (!g) return; // Locked: say nothing until it's opened.
       const today = dateKey(new Date());

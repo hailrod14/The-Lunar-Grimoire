@@ -63,6 +63,7 @@ function sanitizeSettings(v: unknown): Settings {
     hemisphere: s.hemisphere === "south" ? "south" : "north",
     lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
     holidayRegion: oneOf(s.holidayRegion, HOLIDAY_REGIONS.map((r) => r.id)) ? s.holidayRegion : DEFAULT_SETTINGS.holidayRegion,
+    pushGroup: typeof s.pushGroup === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(s.pushGroup) ? s.pushGroup : "",
   };
 }
 

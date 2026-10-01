@@ -1,0 +1,11 @@
+export type Reminder = { k: string; time: string; days: number[] };
+export type LocalNow = { date: string; time: string; weekday: number };
+export const GRACE_MINUTES: number;
+export function localNow(at: Date, timeZone: string): LocalNow;
+export function dueNow(reminders: Reminder[], now: LocalNow, taken: string[], sent: string[]): Reminder[];
+export function isId(v: unknown): boolean;
+export function isPushEndpoint(v: unknown): boolean;
+export function isTimeZone(v: unknown): boolean;
+export function cleanReminders(v: unknown): Reminder[] | null;
+export function cleanKeys(v: unknown): string[] | null;
+export function isDate(v: unknown): boolean;

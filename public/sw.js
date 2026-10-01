@@ -2,7 +2,9 @@
 // device so it opens and works offline. Your data is never touched here —
 // it lives in localStorage, not in this cache.
 
-const CACHE = "lunar-grimoire-v9";
+const CACHE = "lunar-grimoire-v10";
+/** Potion names for reminder text, written by the app only if names are allowed in reminders. */
+const LABELS = "lunar-grimoire-labels";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -12,7 +14,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys()) if (key !== CACHE) await caches.delete(key);
+      for (const key of await caches.keys()) if (key !== CACHE && key !== LABELS) await caches.delete(key);
       await self.clients.claim();
     })(),
   );
@@ -60,6 +62,45 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached ?? Response.error());
       return cached ?? network;
+    })(),
+  );
+});
+
+// The reminder bell rings with no content; the words come from this device.
+// Potion names are used only if they were allowed in reminders; otherwise
+// the reminder stays private.
+const GRACE_MINUTES = 6;
+
+async function reminderText() {
+  try {
+    const response = await (await caches.open(LABELS)).match("labels.json");
+    if (response) {
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const names = [
+        ...new Set(
+          (await response.json())
+            .filter((l) => {
+              const late = nowMin - (Number(l.time.slice(0, 2)) * 60 + Number(l.time.slice(3)));
+              return late >= 0 && late <= GRACE_MINUTES && (l.days.length === 0 || l.days.includes(now.getDay()));
+            })
+            .map((l) => l.label),
+        ),
+      ];
+      if (names.length) return { title: names.length > 1 ? "Your potions await ✨" : `${names[0]} awaits ✨`, body: names.join(", ") };
+    }
+  } catch {
+    // Fall back to the private wording.
+  }
+  return { title: "Potion time ✨", body: "A potion awaits you. Tap to open your Grimoire." };
+}
+
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    (async () => {
+      const { title, body } = await reminderText();
+      const icon = new URL("icons/icon-192.png", self.registration.scope).href;
+      await self.registration.showNotification(title, { body, icon, badge: icon, tag: "potion-reminder", renotify: true });
     })(),
   );
 });
