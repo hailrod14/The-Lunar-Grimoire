@@ -95,7 +95,7 @@ describe("export and import", () => {
   it("keeps valid entries and drops broken ones", () => {
     const messy = {
       version: 1,
-      settings: { defaultCycleLength: 500, soundEnabled: false },
+      settings: { defaultCycleLength: 500, soundEnabled: false, musicEnabled: true, musicVolume: 7 },
       tides: [{ id: "a", start: "2026-02-30" }, { id: "b", start: "2026-09-22", end: "2026-09-01" }, "junk"],
       potions: [{ name: "" }, { id: "p", name: "Magnesium", vessel: "teapot", color: "plaid", time: "25:99" }],
       days: {
@@ -113,7 +113,7 @@ describe("export and import", () => {
     if (!result.ok) return;
     const g = result.grimoire;
 
-    expect(g.settings).toMatchObject({ defaultCycleLength: 28, soundEnabled: false });
+    expect(g.settings).toMatchObject({ defaultCycleLength: 28, soundEnabled: false, musicEnabled: true, musicVolume: 0.5 });
     expect(g.tides).toEqual([{ id: "b", start: "2026-09-22" }]); // bad date dropped, backwards end dropped
     expect(g.potions).toMatchObject([{ id: "p", name: "Magnesium", vessel: "flask", color: "gold", time: "" }]);
     expect(Object.keys(g.days)).toEqual(["2026-09-30"]);

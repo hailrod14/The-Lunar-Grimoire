@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Settings } from "lucide-react";
+import { BookOpen, CalendarDays, Music, Settings } from "lucide-react";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 
@@ -22,9 +22,11 @@ type Props = {
   onSelect: (v: View) => void;
   /** Sections that are always visible (e.g. the calendar in the two-page spread) need no ribbon. */
   hide?: View[];
+  /** Forest music on/off, shown as a small charm below the ribbons. */
+  music?: { on: boolean; toggle: () => void };
 };
 
-export function Ribbons({ active, dayLabel, onSelect, hide = [] }: Props) {
+export function Ribbons({ active, dayLabel, onSelect, hide = [], music }: Props) {
   return (
     <nav aria-label="Grimoire sections" className="sticky top-4 flex shrink-0 flex-col gap-2 pt-8">
       {RIBBONS.filter((r) => !hide.includes(r.view)).map((r) => {
@@ -50,6 +52,19 @@ export function Ribbons({ active, dayLabel, onSelect, hide = [] }: Props) {
           </button>
         );
       })}
+      {music && (
+        <button
+          type="button"
+          onClick={music.toggle}
+          aria-pressed={music.on}
+          aria-label={music.on ? "Turn forest music off" : "Turn forest music on"}
+          title={music.on ? "Forest music: on" : "Forest music: off"}
+          className={`mt-2 ml-1 grid size-8 place-items-center ${music.on ? "bg-gold-500 text-midnight-950" : "bg-midnight-700 text-silver-500"}`}
+          style={{ boxShadow: "0 0 0 4px var(--color-midnight-950)" }}
+        >
+          <Music size={16} strokeWidth={2.5} className={music.on ? "animate-float" : ""} />
+        </button>
+      )}
     </nav>
   );
 }

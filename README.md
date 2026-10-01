@@ -88,7 +88,7 @@ Back up everything to a `.json` file and restore it on any device. Import checks
 - Start over by erasing the Grimoire (with a confirmation).
 
 ### 📖 A Real Book
-The Grimoire opens on a tooled-leather cover showing your current Tide moon. Pages turn with a pixel page-curl and a soft paper rustle (the cover lands with a gentle thud). Turn sounds off in Settings. On wide screens the book lies open as a two-page spread: the calendar on the left, everything else on the right.
+The Grimoire opens on a tooled-leather cover showing your current Tide moon. Pages turn with a pixel page-curl and the soft breath of a turning page (the cover settles with a low thump). Optional **cozy forest music** is generated live in your browser: warm pads, a wandering music box, wind in the trees, crickets, a crackling hearth, and the occasional owl. It never repeats, needs no downloads, and pauses when you leave. Toggle it with the ♪ charm under the ribbons, and adjust page sounds and music volume in Settings. On wide screens the book lies open as a two-page spread: the calendar on the left, everything else on the right.
 
 ### 📱 Works Everywhere, Even Offline
 The Grimoire is a **Progressive Web App (PWA)**:

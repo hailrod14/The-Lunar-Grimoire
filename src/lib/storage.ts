@@ -42,6 +42,9 @@ function sanitizeSettings(v: unknown): Settings {
     defaultPeriodLength: numberIn(s.defaultPeriodLength, 1, 15, DEFAULT_SETTINGS.defaultPeriodLength),
     onboarded: typeof s.onboarded === "boolean" ? s.onboarded : DEFAULT_SETTINGS.onboarded,
     soundEnabled: typeof s.soundEnabled === "boolean" ? s.soundEnabled : DEFAULT_SETTINGS.soundEnabled,
+    musicEnabled: typeof s.musicEnabled === "boolean" ? s.musicEnabled : DEFAULT_SETTINGS.musicEnabled,
+    musicVolume:
+      typeof s.musicVolume === "number" && s.musicVolume >= 0 && s.musicVolume <= 1 ? s.musicVolume : DEFAULT_SETTINGS.musicVolume,
     lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
   };
 }

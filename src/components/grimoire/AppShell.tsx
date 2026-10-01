@@ -5,8 +5,10 @@ import { usePageTurn, type TurnDirection } from "@/components/pixel/usePageTurn"
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { tideDay } from "@/lib/cycle";
 import { diffKeys, type DateKey } from "@/lib/dates";
+import { setMusicVolume, startMusic, stopMusic } from "@/lib/music";
 import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
-import { dismissLoadProblem, useGrimoireState } from "@/lib/store";
+import { updateSettings } from "@/lib/grimoire";
+import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
@@ -40,6 +42,16 @@ export function AppShell() {
   }, []);
   const state = useGrimoireState();
   const today = useToday();
+
+  // Music follows the setting; it starts on the next tap, as browsers require.
+  const musicOn = state?.grimoire.settings.musicEnabled ?? false;
+  const musicVolume = state?.grimoire.settings.musicVolume ?? 0.5;
+  useEffect(() => {
+    if (musicOn) startMusic();
+    else stopMusic();
+  }, [musicOn]);
+  useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
+
   if (!state || !today) return <Loading />;
   if (!state.grimoire.settings.onboarded) return <Onboarding today={today} />;
   return (
@@ -136,6 +148,10 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
       dayLabel={rightView === "day" && selected !== today ? "Day" : "Today"}
       onSelect={onRibbon}
       hide={spread ? ["calendar"] : []}
+      music={{
+        on: g.settings.musicEnabled,
+        toggle: () => dispatch((x) => updateSettings(x, { musicEnabled: !x.settings.musicEnabled })),
+      }}
     />
   );
 

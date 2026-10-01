@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { cycleStats, MIN_CYCLES_TO_LEARN } from "@/lib/cycle";
 import type { DateKey } from "@/lib/dates";
+import { Play } from "lucide-react";
 import { updateSettings } from "@/lib/grimoire";
+import { playPageTurn } from "@/lib/sound";
 import { isAppleMobile, isInstalled, promptInstall, useCanInstall } from "@/lib/pwa";
 import { dispatch, replaceGrimoire } from "@/lib/store";
 import { newGrimoire, type Grimoire } from "@/lib/types";
@@ -34,14 +36,7 @@ export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
       {tracking && <Rhythm g={g} />}
       {tracking && <TideHistory g={g} today={today} />}
       <Backups g={g} today={today} />
-      <Section title="Sound">
-        <Choice selected={g.settings.soundEnabled} onClick={() => dispatch((x) => updateSettings(x, { soundEnabled: true }))}>
-          🔊 Rustle the pages
-        </Choice>
-        <Choice selected={!g.settings.soundEnabled} onClick={() => dispatch((x) => updateSettings(x, { soundEnabled: false }))}>
-          🔇 Silent pages
-        </Choice>
-      </Section>
+      <SoundAndMusic g={g} />
       <Install />
 
       <Section title="About">
@@ -92,6 +87,52 @@ function Rhythm({ g }: { g: Grimoire }) {
         <p className="text-sm text-silver-300">Estimated tide length</p>
         <Stepper label="Estimated tide length" value={g.settings.defaultPeriodLength} min={2} max={10} unit="days" onChange={(n) => set({ defaultPeriodLength: n })} />
       </div>
+    </Section>
+  );
+}
+
+function SoundAndMusic({ g }: { g: Grimoire }) {
+  const set = (patch: Parameters<typeof updateSettings>[1]) => dispatch((x) => updateSettings(x, patch));
+  const { soundEnabled, musicEnabled, musicVolume } = g.settings;
+
+  return (
+    <Section title="Sound & music">
+      <p className="text-sm text-silver-300">Page turns</p>
+      <Choice selected={soundEnabled} onClick={() => set({ soundEnabled: true })}>
+        🍃 A gentle turn of the page
+      </Choice>
+      <Choice selected={!soundEnabled} onClick={() => set({ soundEnabled: false })}>
+        🔇 Silent pages
+      </Choice>
+      <button type="button" onClick={() => playPageTurn("page", true)} className="pixel-button pixel-button--ghost">
+        <Play size={14} /> Hear a page turn
+      </button>
+
+      <p className="pt-2 text-sm text-silver-300">Forest music</p>
+      <Choice selected={musicEnabled} onClick={() => set({ musicEnabled: true })}>
+        🌲 Play cozy forest music
+      </Choice>
+      <Choice selected={!musicEnabled} onClick={() => set({ musicEnabled: false })}>
+        Quiet
+      </Choice>
+      <label className="flex items-center gap-3 text-sm text-silver-300">
+        Volume
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={Math.round(musicVolume * 100)}
+          onChange={(e) => set({ musicVolume: Number(e.target.value) / 100 })}
+          className="flex-1 accent-gold-500"
+          aria-valuetext={`${Math.round(musicVolume * 100)} percent`}
+        />
+        <span className="w-10 text-right font-journal text-lg text-gold-300">{Math.round(musicVolume * 100)}</span>
+      </label>
+      <p className="font-journal text-lg text-silver-500">
+        Played live in the browser: soft pads, a music box, wind, crickets, a crackling hearth, and the occasional owl. It never
+        repeats, and pauses when you leave the Grimoire. You can also tap the ♪ charm under the ribbons.
+      </p>
     </Section>
   );
 }

@@ -23,6 +23,10 @@ export type Settings = {
   defaultPeriodLength: number;
   onboarded: boolean;
   soundEnabled: boolean;
+  /** Generated forest-witch music. Off by default; it never plays without a tap. */
+  musicEnabled: boolean;
+  /** Music volume from 0 to 1. */
+  musicVolume: number;
   /** When the Grimoire was last exported, as an ISO timestamp ("" = never). */
   lastBackupAt: string;
 };
@@ -76,6 +80,8 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultPeriodLength: 5,
   onboarded: false,
   soundEnabled: true,
+  musicEnabled: false,
+  musicVolume: 0.5,
   lastBackupAt: "",
 };
 
