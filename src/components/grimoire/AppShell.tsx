@@ -126,6 +126,19 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
     });
   };
 
+  /** Turn the pages back and close the cover. */
+  const close = () =>
+    turn(
+      "backward",
+      () => {
+        setCoverOpen(false);
+        setView("calendar");
+        setSelected(today);
+        window.scrollTo({ top: 0 });
+      },
+      "leather",
+    );
+
   // The Today and Journal ribbons always open today's page.
   const onRibbon = (v: View) => open(v === "day" || v === "journal" ? today : selected, v);
 
@@ -156,6 +169,7 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
       dayLabel={rightView === "day" && selected !== today ? "Day" : "Today"}
       onSelect={onRibbon}
       hide={spread ? ["calendar"] : []}
+      onClose={coverOpen ? close : undefined}
       music={{
         on: g.settings.musicEnabled,
         toggle: () => dispatch((x) => updateSettings(x, { musicEnabled: !x.settings.musicEnabled })),

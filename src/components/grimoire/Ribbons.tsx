@@ -26,9 +26,11 @@ type Props = {
   hide?: View[];
   /** Forest music on/off, shown as a small charm below the ribbons. */
   music?: { on: boolean; toggle: () => void };
+  /** Close the book back onto its cover (shown while it's open). */
+  onClose?: () => void;
 };
 
-export function Ribbons({ active, dayLabel, onSelect, hide = [], music }: Props) {
+export function Ribbons({ active, dayLabel, onSelect, hide = [], music, onClose }: Props) {
   return (
     <nav aria-label="Grimoire sections" className="sticky top-4 flex shrink-0 flex-col gap-2 pt-8">
       {RIBBONS.filter((r) => !hide.includes(r.view)).map((r) => {
@@ -54,6 +56,21 @@ export function Ribbons({ active, dayLabel, onSelect, hide = [], music }: Props)
           </button>
         );
       })}
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close the Grimoire"
+          title="Close the Grimoire"
+          className="mt-2 ml-1 grid size-8 place-items-center bg-midnight-700 hover:bg-midnight-600"
+          style={{ boxShadow: "0 0 0 4px var(--color-midnight-950)" }}
+        >
+          {/* The cover's gold clasp, in miniature */}
+          <span aria-hidden className="grid size-5 place-items-center bg-gold-500 shadow-[inset_-3px_-3px_0_#b07a1c,inset_3px_3px_0_#fff4c2]">
+            <span className="size-1.5 bg-midnight-950" />
+          </span>
+        </button>
+      )}
       {music && (
         <button
           type="button"
