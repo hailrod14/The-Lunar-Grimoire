@@ -83,6 +83,41 @@ describe("the PIN lock", () => {
   });
 });
 
+describe("the sync record", () => {
+  beforeEach(() => {
+    vi.setConfig({ testTimeout: 30_000 });
+  });
+
+  const syncSaved = () => storage.getItem("lunar-grimoire:sync") ?? "";
+
+  it("is sealed under the PIN and unavailable while locked", async () => {
+    const store = await freshStore();
+    await store.setCompanion({ uid: "me", key: { raw: "SYNCKEY" } });
+    expect(syncSaved()).toContain("SYNCKEY");
+
+    await store.setPin("2468");
+    expect(syncSaved()).not.toContain("SYNCKEY");
+    await store.lockNow();
+    expect(store.getCompanion()).toBeNull();
+
+    const reloaded = await reload();
+    expect(reloaded.getCompanion()).toBeNull();
+    expect(await reloaded.unlock("2468")).toBe(true);
+    expect(reloaded.getCompanion()).toEqual({ uid: "me", key: { raw: "SYNCKEY" } });
+
+    expect(await reloaded.removePin("2468")).toBe(true);
+    expect(syncSaved()).toContain("SYNCKEY");
+    await reloaded.eraseEverything();
+    expect(syncSaved()).toBe("");
+  });
+});
+
+/** Load the store module again over the same storage, like reopening the app. */
+async function reload() {
+  vi.resetModules();
+  return import("./store");
+}
+
 function emptyDayFor() {
   return { elements: { morning: [], afternoon: [], night: [] }, journal: "", potionLogs: [], symptoms: [] };
 }

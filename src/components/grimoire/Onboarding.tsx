@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Cloud, Plus, Trash2, Upload } from "lucide-react";
 import { usePageTurn } from "@/components/pixel/usePageTurn";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 import { MAX_TIDE_DAYS } from "@/lib/cycle";
+import { SYNC_AVAILABLE } from "@/lib/firebase-config";
 import { addDaysKey, type DateKey } from "@/lib/dates";
 import { describeSchedule } from "@/lib/potions";
 import { completeOnboarding } from "@/lib/grimoire";
@@ -14,6 +15,7 @@ import { dispatch, replaceGrimoire } from "@/lib/store";
 import { Choice, Stepper } from "./Controls";
 import { BLANK_POTION, PotionForm, type PotionDraft } from "./PotionForm";
 import { Section } from "./Section";
+import { SyncPanel } from "./SyncSettings";
 
 const PAGES = ["Welcome", "Your last tide", "Your rhythm", "Your cabinet"] as const;
 
@@ -94,7 +96,7 @@ export function Onboarding({ today }: { today: DateKey }) {
                 A private book for your tides, your moods, and your potions.
               </p>
               <ul className="space-y-2 text-left font-journal text-xl text-silver-300">
-                <li>🔒 Everything stays on this device. No accounts, no servers.</li>
+                <li>🔒 Private by design. Everything stays on this device unless you choose to sync, and then it&apos;s encrypted first.</li>
                 <li>🌙 Your cycle becomes a personal Lunar Tide.</li>
                 <li>⚗️ Your medicines and supplements live in a potion cabinet.</li>
               </ul>
@@ -102,6 +104,7 @@ export function Onboarding({ today }: { today: DateKey }) {
                 A reflection tool, not a medical device. Predictions are estimates, never for contraception.
               </p>
               <RestoreBackup />
+              {SYNC_AVAILABLE && <SyncFromAnotherDevice />}
             </div>
           )}
 
@@ -244,6 +247,26 @@ export function Onboarding({ today }: { today: DateKey }) {
         {overlay}
       </div>
     </main>
+  );
+}
+
+/** For a second device: sign in and open the synced Grimoire instead of starting fresh. */
+function SyncFromAnotherDevice() {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="pixel-button pixel-button--ghost">
+        <Cloud size={16} /> Sync from my other device
+      </button>
+    );
+  }
+  return (
+    <div className="pixel-frame w-full space-y-3 p-3 text-left">
+      <SyncPanel adopt />
+      <button type="button" onClick={() => setOpen(false)} className="pixel-button pixel-button--ghost">
+        Cancel
+      </button>
+    </div>
   );
 }
 

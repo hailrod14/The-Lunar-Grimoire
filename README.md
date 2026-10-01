@@ -81,6 +81,15 @@ A three-page setup when you first open the app:
 ### 🌕 The Wheel of the Year
 The calendar marks the eight sabbats (Samhain, Yule, Imbolc, Ostara, Beltane, Litha, Lughnasadh, Mabon) and every new and full moon, with traditional names like the Harvest and Hunter's Moons and Blue Moons. Moon phases and solstices are computed precisely on your device (Meeus's astronomical algorithms). Choose northern or southern hemisphere in Settings. Each day you can draw a card from the tarot's Major Arcana or cast an Elder Futhark rune; the draw is kept with the day.
 
+### 🎂 Holidays & Occasions
+Public holidays and well-loved observances for the US, Canada, the UK, or Australia, plus your own birthdays, anniversaries, celebrations, and remembrances (yearly or one-time, with ages counted if you add the year). Each shows as a small mark in the day's right-hand column on the calendar and is named on the day's page.
+
+### ☁️ Sync Across Devices (optional)
+Sign in with Google and choose a sync passphrase, and your Grimoire stays the same on your phone and computer. Everything is compressed and encrypted on your device with your passphrase before it's uploaded (AES-256-GCM, PBKDF2-derived key), so the sync server only ever holds data it can't read. Changes sync within moments and whenever the app opens; entries made on two devices at once are merged, not overwritten. With a PIN set, the sync key is sealed under the PIN too.
+
+### 👓 Reading Comfort
+Words you read use Atkinson Hyperlegible Next, a typeface designed by the Braille Institute so every letter is distinct, while titles keep their pixel lettering. Per device, choose Storybook (pixel titles), Easy-read everywhere, or All pixel, and Regular, Large, or Larger text.
+
 ### 🎨 Themes
 Midnight, Parchment (light), Enchanted Forest, and Rose Quartz, or let the Grimoire match your device or follow the seasons. A clasp charm under the ribbons closes the book back onto its cover.
 
@@ -122,13 +131,14 @@ The Grimoire is a **Progressive Web App (PWA)**:
 ## 🔒 Privacy
 
 - All data is stored in your browser's `localStorage` on your device.
-- There is no backend, no accounts, no cookies, no analytics, and no third-party tracking.
+- There are no ads, no analytics, and no tracking. Sync is optional; when it's on, only an encrypted copy (that the server can't read) is stored in Firebase under your Google account.
 - This repository is public, but it contains only the app's code, **never your entries**.
 
 **Please keep in mind:**
 - Anyone with access to your browser profile can open the app and see your data.
 - **Clearing your browser data permanently deletes your Grimoire.** Export a backup regularly.
-- Data does not sync between devices automatically. Use Export and Import to move it.
+- Without sync, data stays on one device. Turn on sync in Settings, or use Export and Import to move it.
+- If you forget your sync passphrase, the synced copy can't be opened by anyone, including you. Each device keeps its own copy.
 - **On iPhone and iPad, the home-screen app keeps its own separate storage from Safari.** Export in Safari, then Import in the installed app.
 
 ---
@@ -178,6 +188,8 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 2. Under **Source**, select **GitHub Actions**.
 3. Push to `main`. The site will be published at `https://hailrod14.github.io/The-Lunar-Grimoire/`.
 
+**Sync (optional):** create a free Firebase project, enable Google sign-in and Firestore, publish `firestore.rules`, add `<user>.github.io` to Authentication → Authorized domains, and paste the web app's config into `src/lib/firebase-config.ts`. With the config left empty, the app builds without sync.
+
 ---
 
 ## 🗺️ Roadmap
@@ -199,6 +211,12 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Journal search and #tags
 - [x] Wheel of the Year, named moons, and the daily tarot / rune draw
 - [x] Themes, plus closing the book back onto its cover
+
+**Phase 4**
+- [x] Readable lettering (Atkinson Hyperlegible Next) with per-device lettering and text size
+- [x] Public holidays and personal occasions on the calendar
+- [x] Capsule, tablet, and pill bottle vessels
+- [x] Optional end-to-end encrypted sync across devices (Firebase)
 
 **Phase 2**
 - [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock

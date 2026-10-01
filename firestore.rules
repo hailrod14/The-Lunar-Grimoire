@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// The Lunar Grimoire: one encrypted copy per person, readable and writable
+// only by its owner. Each write must build on the copy it read (rev + 1).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /grimoires/{userId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['v', 'salt', 'rounds', 'iv', 'data', 'rev', 'updatedAt'])
+        && request.resource.data.salt is string
+        && request.resource.data.rounds is int
+        && request.resource.data.iv is bytes
+        && request.resource.data.data is bytes
+        && request.resource.data.rev is int
+        && request.resource.data.rev == (resource == null ? 1 : resource.data.rev + 1);
+    }
+
+    // Nothing else exists.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

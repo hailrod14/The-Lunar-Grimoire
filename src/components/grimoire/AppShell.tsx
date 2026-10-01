@@ -11,6 +11,7 @@ import { updateSettings } from "@/lib/grimoire";
 import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { applyTheme, resolveTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { startSync } from "@/lib/sync";
 import { useReminderNotifications } from "@/lib/useReminders";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
@@ -59,6 +60,12 @@ export function AppShell() {
   }, [musicOn]);
   useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
   useReminderNotifications(Boolean(open?.grimoire.settings.onboarded));
+
+  // Sync, if it's set up on this device, starts once the Grimoire is open (after the PIN, if any).
+  const isOpen = open !== null;
+  useEffect(() => {
+    if (isOpen) void startSync(false);
+  }, [isOpen]);
 
   // Theme: follows the setting, the device's light/dark mode, or the season.
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");

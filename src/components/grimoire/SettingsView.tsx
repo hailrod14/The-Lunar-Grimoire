@@ -14,6 +14,7 @@ import type { Grimoire } from "@/lib/types";
 import { Backups } from "./Backups";
 import { Choice, Stepper } from "./Controls";
 import { OccasionsSettings } from "./Occasions";
+import { SyncSettings } from "./SyncSettings";
 import { PinSettings } from "./PinSettings";
 import { RemindersSettings } from "./RemindersSettings";
 import { Section } from "./Section";
@@ -27,6 +28,7 @@ export function SettingsView({ g, today, onOpenSummary }: { g: Grimoire; today: 
       <h2 className="pixel-title text-center text-2xl">Settings</h2>
 
       <ReadingComfort />
+      <SyncSettings />
 
       <Section title="Cycle tracking">
         <Choice selected={tracking} onClick={() => dispatch((x) => updateSettings(x, { cycleTracking: true }))}>
@@ -60,7 +62,8 @@ export function SettingsView({ g, today, onOpenSummary }: { g: Grimoire; today: 
 
       <Section title="About">
         <p className="font-journal text-lg text-silver-300">
-          🔒 The Lunar Grimoire has no accounts, servers, or tracking. Everything you write stays in this browser on this device.
+          🔒 The Lunar Grimoire has no ads or tracking. Everything you write stays on this device, unless you turn on sync. Then it&apos;s
+          encrypted with your passphrase before it leaves, so the sync server only ever holds scrambled data.
         </p>
         <p className="font-journal text-lg text-silver-500">
           It&apos;s a reflection tool, not a medical device. Predictions are estimates. Never rely on them for contraception. For health

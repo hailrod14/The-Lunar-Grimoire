@@ -103,7 +103,7 @@ export default function Altar() {
         <div className="pixel-frame grid grid-cols-3 gap-4 p-5 sm:grid-cols-6">
           {VESSELS.map((v, i) => (
             <figure key={v} className="flex flex-col items-center gap-2 text-center">
-              <VesselSprite vessel={v} color={Object.keys(LIQUID_COLORS)[i] as LiquidColor} size={48} title={VESSEL_NAMES[v]} />
+              <VesselSprite vessel={v} color={Object.keys(LIQUID_COLORS)[i % Object.keys(LIQUID_COLORS).length] as LiquidColor} size={48} title={VESSEL_NAMES[v]} />
               <figcaption className="font-journal text-lg leading-tight text-silver-300">{VESSEL_NAMES[v]}</figcaption>
             </figure>
           ))}

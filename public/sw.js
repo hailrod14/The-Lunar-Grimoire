@@ -2,7 +2,7 @@
 // device so it opens and works offline. Your data is never touched here —
 // it lives in localStorage, not in this cache.
 
-const CACHE = "lunar-grimoire-v5";
+const CACHE = "lunar-grimoire-v6";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

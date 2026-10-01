@@ -24,12 +24,12 @@ export type SealedGrimoire = {
 /** A derived key plus what's needed to store alongside it. */
 export type Seal = { key: CryptoKey; salt: string; rounds: number };
 
-const toBase64 = (bytes: Uint8Array) => {
+export const toBase64 = (bytes: Uint8Array) => {
   let binary = "";
   for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(binary);
 };
-const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+export const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
 
 export function isSealed(value: unknown): value is SealedGrimoire {
   const v = value as SealedGrimoire;

@@ -12,6 +12,10 @@ import { newGrimoire, type Grimoire } from "./types";
  *
  * With a PIN set, every save is encrypted with a key that exists only in
  * memory while unlocked. Locking forgets the key and the decrypted Grimoire.
+ *
+ * Alongside the Grimoire the store keeps one companion record for sync (its
+ * key and the last copy both devices agreed on). It's saved and sealed the
+ * same way, so with a PIN set it can't be read, or used, while locked.
  */
 
 export type OpenState = {
@@ -26,7 +30,11 @@ export type OpenState = {
 export type LockedState = { status: "locked"; sealed: SealedGrimoire };
 export type StoreState = OpenState | LockedState;
 
+export const SYNC_STORAGE_KEY = `${STORAGE_KEY}:sync`;
+
 let state: StoreState | null = null;
+/** The sync record (opaque here; sync.ts validates it). Null while locked or when sync is off. */
+let companion: unknown = null;
 let seal: Seal | null = null;
 /** Encrypted saves run one after another so the newest always lands last. */
 let saving: Promise<void> = Promise.resolve();
@@ -40,8 +48,66 @@ function ensureLoaded(): StoreState {
       loaded.status === "sealed"
         ? { status: "locked", sealed: loaded.sealed }
         : { status: "open", grimoire: loaded.grimoire, problem: loaded.problem, saveFailed: false, pinSet: false };
+    if (state.status === "open") companion = readCompanionPlain();
   }
   return state;
+}
+
+// ── The companion (sync) record ──────────────────────────────
+
+function readCompanionText(): string | null {
+  try {
+    return localStorage.getItem(SYNC_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** The companion record when no PIN is set (an unsealed save). */
+function readCompanionPlain(): unknown {
+  try {
+    const value = JSON.parse(readCompanionText() ?? "null");
+    return isSealed(value) ? null : value;
+  } catch {
+    return null;
+  }
+}
+
+/** The companion record sealed with `key`, or null if there isn't one it opens. */
+async function readCompanionSealed(key: CryptoKey): Promise<unknown> {
+  try {
+    const value = JSON.parse(readCompanionText() ?? "null");
+    if (!isSealed(value)) return null;
+    return JSON.parse(await openText(value, key));
+  } catch {
+    return null;
+  }
+}
+
+/** Save the companion record (sealed when a PIN is set), after any save in progress. */
+function persistCompanion(): Promise<void> {
+  const value = companion;
+  const key = seal;
+  saving = saving.then(async () => {
+    try {
+      if (value === null) localStorage.removeItem(SYNC_STORAGE_KEY);
+      else localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(key ? await sealText(JSON.stringify(value), key) : value));
+    } catch {
+      // Sync will set itself up again if this is lost.
+    }
+  });
+  return saving;
+}
+
+/** The sync record, or null while locked or when sync isn't set up on this device. */
+export const getCompanion = (): unknown => (ensureLoaded().status === "open" ? companion : null);
+
+/** Replace the sync record (null removes it). Ignored while locked. */
+export function setCompanion(value: unknown): Promise<void> {
+  if (ensureLoaded().status !== "open") return Promise.resolve();
+  companion = value;
+  emit();
+  return persistCompanion();
 }
 
 function emit() {
@@ -122,6 +188,7 @@ export async function unlock(pin: string): Promise<boolean> {
     return false;
   }
   seal = attempt;
+  companion = await readCompanionSealed(attempt.key);
   state = { status: "open", grimoire, saveFailed: false, pinSet: true };
   emit();
   return true;
@@ -145,6 +212,7 @@ export async function setPin(pin: string): Promise<void> {
   if (current.status !== "open") return;
   seal = await deriveSeal(pin);
   await persist(current.grimoire);
+  await persistCompanion();
   setOpen({ pinSet: true });
 }
 
@@ -154,6 +222,7 @@ export async function changePin(currentPin: string, newPin: string): Promise<boo
   if (current.status !== "open" || !(await pinMatches(currentPin))) return false;
   seal = await deriveSeal(newPin);
   await persist(current.grimoire);
+  await persistCompanion();
   return true;
 }
 
@@ -164,6 +233,7 @@ export async function removePin(pin: string): Promise<boolean> {
   await saving;
   seal = null;
   await persist(current.grimoire);
+  await persistCompanion();
   setOpen({ pinSet: false });
   return true;
 }
@@ -175,6 +245,7 @@ export async function lockNow(): Promise<void> {
   const sealed = readSealed();
   if (!sealed) return; // Never lock without a sealed copy safely saved.
   seal = null;
+  companion = null;
   state = { status: "locked", sealed };
   emit();
 }
@@ -185,7 +256,9 @@ export async function eraseEverything(): Promise<void> {
   seal = null;
   const fresh = newGrimoire();
   saveGrimoire(fresh);
+  companion = null;
   try {
+    localStorage.removeItem(SYNC_STORAGE_KEY);
     for (const key of Object.keys(localStorage)) if (key.startsWith(`${STORAGE_KEY}:reminded:`)) localStorage.removeItem(key);
   } catch {
     // Reminder bookkeeping is harmless to leave behind.
@@ -197,6 +270,12 @@ export async function eraseEverything(): Promise<void> {
 // ── Other tabs, and locking when you leave ───────────────────
 
 async function onStorage(e: StorageEvent) {
+  if (e.key === SYNC_STORAGE_KEY) {
+    if (ensureLoaded().status !== "open") return;
+    companion = seal ? await readCompanionSealed(seal.key) : readCompanionPlain();
+    emit();
+    return;
+  }
   if (e.key !== STORAGE_KEY || e.newValue === null) return;
   let value: unknown;
   try {
@@ -214,6 +293,7 @@ async function onStorage(e: StorageEvent) {
       }
     } else {
       seal = null;
+      companion = null;
       state = { status: "locked", sealed: value };
       emit();
     }
@@ -222,6 +302,7 @@ async function onStorage(e: StorageEvent) {
   const parsed = sanitizeGrimoire(value);
   if (!parsed.ok) return;
   seal = null; // Another tab removed the PIN.
+  companion = readCompanionPlain();
   const current = ensureLoaded();
   state = current.status === "open" ? { ...current, grimoire: parsed.grimoire, pinSet: false } : { status: "open", grimoire: parsed.grimoire, saveFailed: false, pinSet: false };
   emit();
@@ -239,7 +320,8 @@ function onVisibility() {
   }
 }
 
-function subscribe(listener: () => void) {
+/** Be told about every change: the Grimoire, locking, or the sync record. */
+export function subscribe(listener: () => void) {
   if (listeners.size === 0) {
     window.addEventListener("storage", onStorage);
     document.addEventListener("visibilitychange", onVisibility);
