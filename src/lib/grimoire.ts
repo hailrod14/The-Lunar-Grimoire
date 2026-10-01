@@ -10,6 +10,7 @@ import {
   type Grimoire,
   type Occasion,
   type Potion,
+  type Rest,
   type Settings,
   type SymptomSeverity,
   type Tide,
@@ -53,6 +54,17 @@ export const setJournal = (g: Grimoire, date: DateKey, journal: string) =>
   updateDay(g, date, (d) => ({ ...d, journal }));
 
 /** Keep the day's drawn card or rune, or return it to the deck (undefined). */
+/** Merge in sleep or energy for a day; a field set to undefined is cleared. */
+export const setRest = (g: Grimoire, date: DateKey, patch: Rest) =>
+  updateDay(g, date, (d) => {
+    const rest: Rest = { ...d.rest, ...patch };
+    for (const k of Object.keys(rest) as (keyof Rest)[]) if (rest[k] === undefined) delete rest[k];
+    const day = { ...d };
+    if (Object.keys(rest).length) day.rest = rest;
+    else delete day.rest;
+    return day;
+  });
+
 export const setDraw = (g: Grimoire, date: DateKey, draw: Draw | undefined) =>
   updateDay(g, date, (d) => {
     const { draw: _old, ...rest } = d; // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -235,6 +247,11 @@ export const archivePotion = (g: Grimoire, id: string, archived = true): Grimoir
   ...g,
   potions: g.potions.map((p) => (p.id === id ? { ...p, archived } : p)),
 });
+
+/** Count what's on the shelf now (e.g. after opening a new bottle, add what it holds). */
+export function countSupply(g: Grimoire, id: string, amount: number, now: string): Grimoire {
+  return { ...g, potions: g.potions.map((p) => (p.id === id && p.supply ? { ...p, supply: { ...p.supply, amount, since: now } } : p)) };
+}
 
 export const activePotions = (g: Grimoire) => g.potions.filter((p) => !p.archived);
 

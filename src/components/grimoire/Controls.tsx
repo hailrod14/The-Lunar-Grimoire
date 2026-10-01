@@ -14,16 +14,18 @@ export function Choice({ selected, onClick, children }: { selected: boolean; onC
   );
 }
 
-export function Stepper({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (n: number) => void }) {
+type StepperProps = { label: string; value: number; min: number; max: number; unit: string; step?: number; onChange: (n: number) => void };
+
+export function Stepper({ label, value, min, max, unit, step = 1, onChange }: StepperProps) {
   return (
     <div className="flex items-center gap-2" role="group" aria-label={label}>
-      <button type="button" aria-label={`Fewer ${unit}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
+      <button type="button" aria-label={`Fewer ${unit}`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - step))} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
         <Minus size={16} strokeWidth={3} />
       </button>
       <span aria-live="polite" className="min-w-24 text-center font-journal text-3xl text-gold-300">
         {value} <span className="font-journal text-xl text-silver-300">{unit}</span>
       </span>
-      <button type="button" aria-label={`More ${unit}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
+      <button type="button" aria-label={`More ${unit}`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + step))} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
         <Plus size={16} strokeWidth={3} />
       </button>
     </div>

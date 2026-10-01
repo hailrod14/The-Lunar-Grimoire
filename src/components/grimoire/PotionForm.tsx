@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 import { Minus, Plus } from "lucide-react";
-import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, WEEKDAYS_SHORT, type LiquidColor } from "@/lib/potions";
-import type { Potion, Schedule } from "@/lib/types";
+import { dateKey, nowTime } from "@/lib/dates";
+import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, WEEKDAYS_SHORT, stamp, type LiquidColor, type Vessel } from "@/lib/potions";
+import type { Potion, Schedule, Supply } from "@/lib/types";
+import { Stepper } from "./Controls";
 import { Section } from "./Section";
 
 export type PotionDraft = Omit<Potion, "id"> & { id?: string };
@@ -40,17 +42,57 @@ function nextTime(times: string[]): string {
 const input =
   "pixel-frame block w-[calc(100%-8px)] bg-midnight-950 px-3 py-2 font-journal text-xl text-silver-100 placeholder:text-silver-700 focus:outline-none";
 
+const UNITS = ["pills", "capsules", "tablets", "gummies", "ml", "drops", "sachets", "doses"];
+
+/** A likely unit for a vessel, as a starting point. */
+const UNIT_FOR: Record<Vessel, string> = {
+  flask: "ml",
+  vial: "ml",
+  dropper: "drops",
+  capsule: "capsules",
+  tablet: "tablets",
+  bottle: "pills",
+  herbs: "doses",
+  crystal: "doses",
+  cauldron: "doses",
+};
+
+/** Parse a count typed by hand: whole or decimal, never negative. */
+const parseCount = (text: string) => {
+  const n = Number(text.replace(",", "."));
+  return text.trim() !== "" && Number.isFinite(n) && n >= 0 ? n : null;
+};
+
 type Props = {
   initial: PotionDraft;
+  /** How much is left now, for a potion whose supply is already tracked. */
+  supplyLeft?: number | null;
   onSave: (p: PotionDraft) => void;
   onCancel: () => void;
   saveLabel?: string;
 };
 
-export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Props) {
+export function PotionForm({ initial, supplyLeft = null, onSave, onCancel, saveLabel = "Save" }: Props) {
   const [p, setP] = useState(initial);
   const [problem, setProblem] = useState<string | null>(null);
   const set = (patch: Partial<PotionDraft>) => setP((x) => ({ ...x, ...patch }));
+  const [tracking, setTracking] = useState(Boolean(initial.supply));
+  const [count, setCount] = useState(supplyLeft === null ? "" : String(supplyLeft));
+  const [supply, setSupply] = useState<Omit<Supply, "amount" | "since">>({
+    perDose: initial.supply?.perDose ?? 1,
+    unit: initial.supply?.unit ?? UNIT_FOR[initial.vessel],
+    warnDays: initial.supply?.warnDays ?? 7,
+  });
+  const countChanged = count !== (supplyLeft === null ? "" : String(supplyLeft));
+
+  /** The supply to save: recounted now if the count was edited, otherwise as it was. */
+  const savedSupply = (): Supply | undefined => {
+    if (!tracking) return undefined;
+    const amount = parseCount(count);
+    if (initial.supply && !countChanged) return { ...initial.supply, ...supply };
+    if (amount === null) return undefined;
+    return { ...supply, amount, since: stamp(dateKey(new Date()), nowTime()) };
+  };
 
   return (
     <form
@@ -59,6 +101,7 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
         e.preventDefault();
         if (!p.name.trim()) return;
         if (p.schedule === "weekly" && p.days.length === 0) return setProblem("Choose at least one day.");
+        if (tracking && (!initial.supply || countChanged) && parseCount(count) === null) return setProblem("Enter how many you have now.");
         const scheduled = p.schedule !== "as-needed";
         onSave({
           ...p,
@@ -67,6 +110,7 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
           times: scheduled ? [...new Set(p.times.filter(Boolean))].sort() : [],
           days: p.schedule === "weekly" ? [...p.days].sort((a, b) => a - b) : [],
           reminder: scheduled && p.reminder,
+          supply: savedSupply(),
         });
       }}
     >
@@ -175,6 +219,75 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
           </p>
         )}
         <p className="font-journal text-base text-silver-500">Any potion can also have extra doses logged on the day page.</p>
+      </Section>
+
+      <Section title="Apothecary shelf">
+        <button
+          type="button"
+          aria-pressed={tracking}
+          onClick={() => {
+            if (!tracking && !initial.supply) setSupply((x) => ({ ...x, unit: UNIT_FOR[p.vessel] }));
+            setTracking((t) => !t);
+          }}
+          className={`w-full px-3 py-2 text-left text-sm ${tracking ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
+        >
+          🧪 {tracking ? "Keeping count of my supply" : "Keep count of my supply"}
+        </button>
+        {tracking && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="space-y-1">
+                <span className="block text-sm text-silver-300">How many you have now</span>
+                <input
+                  inputMode="decimal"
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
+                  placeholder="30"
+                  className="block w-28 bg-midnight-950 px-3 py-2 font-journal text-xl text-silver-100 outline-2 outline-violet-500 placeholder:text-silver-700 focus:outline-gold-300"
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="block text-sm text-silver-300">Counted in</span>
+                <input
+                  list="supply-units"
+                  value={supply.unit}
+                  onChange={(e) => setSupply((x) => ({ ...x, unit: e.target.value }))}
+                  maxLength={20}
+                  className="block w-36 bg-midnight-950 px-3 py-2 font-journal text-xl text-silver-100 outline-2 outline-violet-500 focus:outline-gold-300"
+                />
+                <datalist id="supply-units">
+                  {UNITS.map((u) => (
+                    <option key={u} value={u} />
+                  ))}
+                </datalist>
+              </label>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-silver-300">Each dose uses</p>
+              <Stepper
+                label="Amount per dose"
+                value={supply.perDose}
+                min={0.5}
+                max={50}
+                step={0.5}
+                unit={supply.unit || "each"}
+                onChange={(n) => setSupply((x) => ({ ...x, perDose: n }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-silver-300">Nudge me to refill when there&apos;s this much left</p>
+              <Stepper
+                label="Days before running out"
+                value={supply.warnDays}
+                min={0}
+                max={30}
+                unit="days"
+                onChange={(n) => setSupply((x) => ({ ...x, warnDays: n }))}
+              />
+            </div>
+            <p className="font-journal text-base text-silver-500">Every dose you check off is taken from the count. Recount any time by changing the number above.</p>
+          </div>
+        )}
       </Section>
 
       <Section title="Vessel">

@@ -6,6 +6,7 @@ import { PixelMoon } from "@/components/sprites/PixelMoon";
 import type { DateKey } from "@/lib/dates";
 import { ELDER_FUTHARK, MAJOR_ARCANA, drawFrom, type Deck, type Draw } from "@/lib/divination";
 import { setDraw } from "@/lib/grimoire";
+import { RITUALS } from "@/lib/prompts";
 import { dispatch } from "@/lib/store";
 import type { Hemisphere } from "@/lib/theme";
 import type { DayEntry } from "@/lib/types";
@@ -42,6 +43,12 @@ export function SkyCard({ date, hemisphere }: { date: DateKey; hemisphere: Hemis
             )}
           </p>
         </div>
+      )}
+      {moon && (
+        <p className="font-journal text-lg leading-snug text-silver-300">
+          <span className="text-gold-300">🕯️ A small ritual: </span>
+          {RITUALS[moon.kind]}
+        </p>
       )}
     </div>
   );

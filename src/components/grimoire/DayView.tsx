@@ -40,6 +40,8 @@ import { formatRange } from "./CalendarView";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
 import { DayOccasions } from "./Occasions";
+import { JournalPrompt } from "./JournalPrompt";
+import { RestSection } from "./RestSection";
 import { DrawSection, SkyCard } from "./SkyAndDraw";
 import { SymptomsSection } from "./SymptomsSection";
 
@@ -93,9 +95,11 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
           <DrawSection date={date} today={today} day={day} />
           {g.settings.cycleTracking && <TideSection g={g} date={date} today={today} day={day} />}
           <ElementsSection date={date} day={day} />
+          <RestSection date={date} day={day} />
           <SymptomsSection g={g} date={date} day={day} />
           <PotionsSection g={g} date={date} today={today} day={day} onOpenCabinet={onOpenCabinet} />
           <Section title="Journal">
+            <JournalPrompt g={g} date={date} today={today} journal={day.journal} />
             <textarea
               value={day.journal}
               onChange={(e) => dispatch((x) => setJournal(x, date, e.target.value))}

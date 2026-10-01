@@ -1,4 +1,4 @@
-import { formatHHMM, parseKey, type DateKey } from "./dates";
+import { addDaysKey, formatHHMM, parseKey, type DateKey } from "./dates";
 import type { DayEntry, Grimoire, Potion, PotionLog } from "./types";
 
 export const VESSELS = ["flask", "vial", "dropper", "capsule", "tablet", "bottle", "herbs", "crystal", "cauldron"] as const;
@@ -60,3 +60,55 @@ export function describeSchedule(p: Pick<Potion, "schedule" | "times" | "days">)
   const days = [...p.days].sort((a, b) => a - b).map((d) => WEEKDAYS_SHORT[d]).join(" · ");
   return `${days || "no days chosen"} at ${times}`;
 }
+
+// ── The apothecary shelf: how much is left ───────────────────
+
+/** "YYYY-MM-DDTHH:MM" for a date and time, the format supply counts are stamped with. */
+export const stamp = (date: DateKey, time: string) => `${date}T${time}`;
+
+/** How much of a potion is left: the last count, minus every dose logged after it. */
+export function supplyLeft(g: Grimoire, p: Potion): number | null {
+  if (!p.supply) return null;
+  const { amount, since, perDose } = p.supply;
+  let used = 0;
+  for (const [date, day] of Object.entries(g.days)) {
+    if (date < since.slice(0, 10)) continue;
+    for (const l of day.potionLogs) if (l.potionId === p.id && stamp(date, l.time) > since) used += perDose;
+  }
+  return Math.max(0, Math.round((amount - used) * 100) / 100);
+}
+
+/** USE_WINDOW days of as-needed doses set its typical daily use. */
+const USE_WINDOW = 30;
+
+/** How much a potion uses on an average day, or null if that can't be known yet. */
+export function dailyUse(g: Grimoire, p: Potion, today: DateKey): number | null {
+  if (!p.supply) return null;
+  if (p.schedule === "daily") return p.times.length * p.supply.perDose;
+  if (p.schedule === "weekly") return (p.times.length * p.days.length * p.supply.perDose) / 7;
+  let doses = 0;
+  for (const [date, day] of Object.entries(g.days)) {
+    if (date > today || date < addDaysKey(today, -USE_WINDOW)) continue;
+    doses += day.potionLogs.filter((l) => l.potionId === p.id).length;
+  }
+  return doses ? (doses * p.supply.perDose) / USE_WINDOW : null;
+}
+
+export type SupplyStatus = { left: number; unit: string; daysLeft: number | null; low: boolean; out: boolean };
+
+export function supplyStatus(g: Grimoire, p: Potion, today: DateKey): SupplyStatus | null {
+  const left = supplyLeft(g, p);
+  if (left === null || !p.supply) return null;
+  const use = dailyUse(g, p, today);
+  const daysLeft = use ? Math.floor(left / use) : null;
+  const out = left < p.supply.perDose;
+  const low = out || (daysLeft !== null ? daysLeft <= p.supply.warnDays : left <= p.supply.perDose * 3);
+  return { left, unit: p.supply.unit, daysLeft, low, out };
+}
+
+/** Potions on the shelf that are running low, for a gentle nudge. */
+export const runningLow = (g: Grimoire, today: DateKey) =>
+  g.potions
+    .filter((p) => !p.archived)
+    .map((p) => ({ potion: p, status: supplyStatus(g, p, today) }))
+    .filter((x): x is { potion: Potion; status: SupplyStatus } => Boolean(x.status?.low));

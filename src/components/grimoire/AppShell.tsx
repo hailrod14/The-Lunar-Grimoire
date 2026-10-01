@@ -178,7 +178,7 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
         />
       )}
       {v === "journal" && <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />}
-      {v === "cabinet" && <CabinetView g={g} />}
+      {v === "cabinet" && <CabinetView g={g} today={today} />}
       {v === "insights" && <InsightsView g={g} today={today} onOpenSummary={() => setSummaryOpen(true)} />}
       {v === "settings" && <SettingsView g={g} today={today} onOpenSummary={() => setSummaryOpen(true)} />}
     </>

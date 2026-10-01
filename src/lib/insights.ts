@@ -39,8 +39,12 @@ export type CycleSummary = { bars: CycleBar[]; average: number; shortest: number
 
 export type PotionConsistency = { id: string; name: string; taken: number; possible: number; share: number };
 
+export type RestRow = { phase: Phase | "all"; nights: number; hours: number | null; quality: number | null; days: number; energy: number | null };
+export type RestHighlight = { kind: "sleep" | "energy"; low: Phase; high: Phase; lowValue: number; highValue: number };
+
 export type Insights = {
   elements: { rows: ElementRow[]; totalLogs: number; highlights: Highlight[]; ready: boolean };
+  rest: { rows: RestRow[]; highlights: RestHighlight[]; ready: boolean; logged: number };
   symptoms: { phases: SymptomPhase[]; ready: boolean };
   cycles: CycleSummary | null;
   potions: PotionConsistency[];
@@ -181,10 +185,61 @@ function potionConsistency(g: Grimoire, today: DateKey): PotionConsistency[] {
     .filter((p) => p.possible > 0);
 }
 
+/** Days with sleep or energy logged before patterns are shown. */
+export const MIN_REST_DAYS = 7;
+/** Nights (or days) needed in a phase before it's compared. */
+const MIN_REST_PHASE = 3;
+/** Differences smaller than these aren't worth putting into words. */
+const SLEEP_GAP_HOURS = 0.5;
+const ENERGY_GAP = 0.6;
+
+const mean = (ns: number[]) => (ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : null);
+
+function restByPhase(g: Grimoire, today: DateKey, tracking: boolean): Insights["rest"] {
+  const groups = new Map<Phase | "all", { hours: number[]; quality: number[]; energy: number[] }>();
+  const add = (key: Phase | "all", r: NonNullable<Grimoire["days"][string]["rest"]>) => {
+    const t = groups.get(key) ?? { hours: [], quality: [], energy: [] };
+    if (r.sleepHours !== undefined) t.hours.push(r.sleepHours);
+    if (r.sleepQuality) t.quality.push(r.sleepQuality);
+    if (r.energy) t.energy.push(r.energy);
+    groups.set(key, t);
+  };
+  let logged = 0;
+  for (const [date, day] of Object.entries(g.days)) {
+    if (!day.rest || date > today) continue;
+    logged++;
+    add("all", day.rest);
+    const phase = tracking ? phaseOf(g, date, today) : null;
+    if (phase) add(phase, day.rest);
+  }
+  const row = (phase: Phase | "all"): RestRow => {
+    const t = groups.get(phase) ?? { hours: [], quality: [], energy: [] };
+    return { phase, nights: t.hours.length, hours: mean(t.hours), quality: mean(t.quality), days: t.energy.length, energy: mean(t.energy) };
+  };
+  const rows = tracking ? PHASES.map(row) : [row("all")];
+
+  const highlights: RestHighlight[] = [];
+  const compare = (kind: "sleep" | "energy", value: (r: RestRow) => number | null, count: (r: RestRow) => number, gap: number) => {
+    const ranked = rows.filter((r) => r.phase !== "all" && count(r) >= MIN_REST_PHASE && value(r) !== null).sort((a, b) => value(a)! - value(b)!);
+    if (ranked.length < 2) return;
+    const low = ranked[0];
+    const high = ranked[ranked.length - 1];
+    if (value(high)! - value(low)! >= gap) {
+      highlights.push({ kind, low: low.phase as Phase, high: high.phase as Phase, lowValue: value(low)!, highValue: value(high)! });
+    }
+  };
+  if (tracking) {
+    compare("sleep", (r) => r.hours, (r) => r.nights, SLEEP_GAP_HOURS);
+    compare("energy", (r) => r.energy, (r) => r.days, ENERGY_GAP);
+  }
+  return { rows, highlights, ready: logged >= MIN_REST_DAYS, logged };
+}
+
 export function computeInsights(g: Grimoire, today: DateKey): Insights {
   const tracking = g.settings.cycleTracking;
   return {
     elements: tracking ? elementGrid(g, today) : { rows: [], totalLogs: 0, highlights: [], ready: false },
+    rest: restByPhase(g, today, tracking),
     symptoms: tracking ? symptomsByPhase(g, today) : { phases: [], ready: false },
     cycles: tracking ? cycleSummary(g) : null,
     potions: potionConsistency(g, today),

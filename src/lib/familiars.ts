@@ -1,6 +1,6 @@
-import { tideDay, type Phase } from "./cycle";
+import type { Phase } from "./cycle";
 import { parseKey, type DateKey } from "./dates";
-import { skyMoonPhase } from "./moon";
+import { phaseOfDay } from "./prompts";
 import type { Hemisphere } from "./theme";
 import type { Familiar, Grimoire } from "./types";
 
@@ -569,17 +569,7 @@ export const owns = (f: Familiar, a: Accessory) => !a.season || f.collected.incl
 export type Mood = Phase;
 
 /** The familiar follows your tide, or the sky's moon if you're not tracking (or nothing is logged yet). */
-export function familiarMood(g: Grimoire, today: DateKey): Mood {
-  if (g.settings.cycleTracking) {
-    const tide = tideDay(today, g.tides, g.settings, today);
-    if (tide) return tide.phase;
-  }
-  const p = skyMoonPhase(parseKey(today));
-  if (p < 0.07 || p > 0.93) return "dark";
-  if (p < 0.43) return "waxing";
-  if (p < 0.57) return "full";
-  return "waning";
-}
+export const familiarMood = (g: Grimoire, today: DateKey): Mood => phaseOfDay(g, today, today);
 
 export function moodLine(f: Familiar, mood: Mood): string {
   switch (mood) {

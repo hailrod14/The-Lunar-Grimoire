@@ -7,7 +7,7 @@ import type { LiquidColor, Vessel } from "./potions";
 import type { Hemisphere, ThemeSetting } from "./theme";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export type Flow = "spotting" | "light" | "medium" | "heavy" | "clots";
 
@@ -65,6 +65,25 @@ export type Potion = {
   archived: boolean;
   /** Remind at `time` each day (daily potions only). */
   reminder: boolean;
+  /** Supply tracking for the apothecary shelf, if switched on. */
+  supply?: Supply;
+};
+
+/**
+ * How much of a potion is on the shelf. Rather than counting down a stored
+ * number (which two synced devices could each decrement), the remaining
+ * amount is worked out from `amount` minus every dose logged after `since`.
+ */
+export type Supply = {
+  /** How many were on hand at `since` (pills, ml, drops…). */
+  amount: number;
+  /** When `amount` was counted, as "YYYY-MM-DDTHH:MM" local time. */
+  since: string;
+  /** How many each dose uses. */
+  perDose: number;
+  unit: string;
+  /** Warn this many days before running out. */
+  warnDays: number;
 };
 
 /** A dose taken. Name and dose are copied so later edits never rewrite history. */
@@ -116,6 +135,12 @@ export type Familiar = {
   adoptedOn: DateKey;
 };
 
+/** 1 (lowest) to 5 (highest). */
+export type Level = 1 | 2 | 3 | 4 | 5;
+
+/** Last night's sleep and today's energy. */
+export type Rest = { sleepHours?: number; sleepQuality?: Level; energy?: Level };
+
 export type DayEntry = {
   flow?: Flow;
   elements: Record<TimeBlock, ElementLog[]>;
@@ -124,6 +149,7 @@ export type DayEntry = {
   symptoms: SymptomLog[];
   /** The day's tarot card or rune, if one was drawn. */
   draw?: Draw;
+  rest?: Rest;
 };
 
 export type Grimoire = {

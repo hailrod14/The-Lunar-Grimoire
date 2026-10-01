@@ -174,6 +174,26 @@ export function VisitSummary({ g, today, onClose }: { g: Grimoire; today: DateKe
           )}
         </section>
 
+        {(s.rest.nights > 0 || s.rest.days > 0) && (
+          <section className="space-y-2">
+            <h2 className="text-base font-bold">Sleep &amp; energy (self-rated)</h2>
+            <ul className="list-disc pl-5">
+              {s.rest.averageSleep !== undefined && (
+                <li>
+                  Average sleep {s.rest.averageSleep.toFixed(1)} hours over {s.rest.nights} night{s.rest.nights === 1 ? "" : "s"} logged
+                  {s.rest.shortestSleep !== undefined && ` (shortest ${s.rest.shortestSleep} hours)`}
+                </li>
+              )}
+              {s.rest.averageQuality !== undefined && <li>Sleep quality averaged {s.rest.averageQuality.toFixed(1)} of 5</li>}
+              {s.rest.averageEnergy !== undefined && (
+                <li>
+                  Energy averaged {s.rest.averageEnergy.toFixed(1)} of 5 over {s.rest.days} day{s.rest.days === 1 ? "" : "s"}
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
+
         {includeMoods && (
           <section className="space-y-2">
             <h2 className="text-base font-bold">Mood (self-rated)</h2>

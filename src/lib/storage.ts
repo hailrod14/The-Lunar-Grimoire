@@ -20,6 +20,8 @@ import {
   type Occasion,
   type Potion,
   type PotionLog,
+  type Rest,
+  type Supply,
   type Settings,
   type SymptomLog,
   type Tide,
@@ -93,7 +95,33 @@ function sanitizePotion(v: unknown): Potion | null {
     schedule,
     archived: v.archived === true,
     reminder: v.reminder === true && schedule !== "as-needed",
+    ...(sanitizeSupply(v.supply) ? { supply: sanitizeSupply(v.supply) } : {}),
   };
+}
+
+const isStamp = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/.test(v);
+const positive = (v: unknown, max: number): number | null =>
+  typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= max ? Math.round(v * 100) / 100 : null;
+
+function sanitizeSupply(v: unknown): Supply | undefined {
+  if (!isObj(v) || !isStamp(v.since)) return undefined;
+  const amount = positive(v.amount, 100_000);
+  const perDose = positive(v.perDose, 1000);
+  if (amount === null || !perDose) return undefined;
+  return { amount, since: v.since, perDose, unit: str(v.unit).trim().slice(0, 20) || "doses", warnDays: numberIn(v.warnDays, 0, 60, 7) };
+}
+
+function sanitizeRest(v: unknown): Rest | undefined {
+  if (!isObj(v)) return undefined;
+  const rest: Rest = {};
+  const hours = positive(v.sleepHours, 24);
+  if (hours !== null) rest.sleepHours = Math.round(hours * 2) / 2;
+  const level = (x: unknown) => numberIn(x, 1, 5, 0) as Rest["energy"] | 0;
+  const quality = level(v.sleepQuality);
+  const energy = level(v.energy);
+  if (quality) rest.sleepQuality = quality;
+  if (energy) rest.energy = energy;
+  return Object.keys(rest).length ? rest : undefined;
 }
 
 function sanitizeElementLog(v: unknown): ElementLog | null {
@@ -182,6 +210,8 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
   day.symptoms = keep(d.symptoms, sanitizeSymptomLog(knownSymptoms)).filter((s) => !seen.has(s.id) && seen.add(s.id));
   if (oneOf(d.flow, FLOWS.map((f) => f.id))) day.flow = d.flow;
   if (isValidDraw(d.draw)) day.draw = { deck: d.draw.deck, card: d.draw.card, reversed: d.draw.reversed };
+  const rest = sanitizeRest(d.rest);
+  if (rest) day.rest = rest;
   return day;
 }
 
@@ -189,7 +219,7 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
  * Older saves are upgraded one version at a time. Add a step here when SCHEMA_VERSION increases.
  * v1 → v2 added symptoms, custom symptoms, and potion reminders; v2 → v3 replaced a potion's
  * single `time` with a list of dose `times` plus weekdays; v3 → v4 added occasions and the
- * holiday region; v4 → v5 added the familiar. Sanitizing fills in and converts
+ * holiday region; v4 → v5 added the familiar; v5 → v6 added sleep & energy and potion supplies. Sanitizing fills in and converts
  * all of these, so no data needs rewriting here.
  */
 function migrate(raw: Obj): Obj {

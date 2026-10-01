@@ -14,6 +14,7 @@ export type SummaryPeriod = { start: DateKey; end?: DateKey; length?: number; cy
 export type SummarySymptom = { name: string; days: number; mild: number; moderate: number; strong: number; commonPhase?: string };
 export type SummaryMedication = { name: string; dose: string; schedule: string; taken: number; scheduled: number };
 export type SummaryAsNeeded = { name: string; dose: string; doses: number; days: number };
+export type SummaryRest = { nights: number; averageSleep?: number; shortestSleep?: number; averageQuality?: number; days: number; averageEnergy?: number };
 export type SummaryMood = { element: Element; logs: number; averageIntensity: number; shadowShare: number };
 
 export type VisitSummary = {
@@ -35,6 +36,7 @@ export type VisitSummary = {
   medications: SummaryMedication[];
   asNeeded: SummaryAsNeeded[];
   moods: SummaryMood[];
+  rest: SummaryRest;
   daysLogged: number;
 };
 
@@ -143,6 +145,19 @@ export function buildVisitSummary(g: Grimoire, from: DateKey, to: DateKey, today
     return { element: e, logs: t.logs, averageIntensity: t.intensity / t.logs, shadowShare: t.shadow / t.logs };
   });
 
+  // ── Sleep and energy
+  const hours = days.map(([, d]) => d.rest?.sleepHours).filter((n): n is number => n !== undefined);
+  const quality = days.map(([, d]) => d.rest?.sleepQuality).filter((n): n is NonNullable<typeof n> => n !== undefined);
+  const energy = days.map(([, d]) => d.rest?.energy).filter((n): n is NonNullable<typeof n> => n !== undefined);
+  const rest: SummaryRest = {
+    nights: hours.length,
+    averageSleep: average(hours),
+    shortestSleep: hours.length ? Math.min(...hours) : undefined,
+    averageQuality: average(quality),
+    days: energy.length,
+    averageEnergy: average(energy),
+  };
+
   return {
     from,
     to,
@@ -162,6 +177,7 @@ export function buildVisitSummary(g: Grimoire, from: DateKey, to: DateKey, today
     medications,
     asNeeded,
     moods,
+    rest,
     daysLogged: days.length,
   };
 }

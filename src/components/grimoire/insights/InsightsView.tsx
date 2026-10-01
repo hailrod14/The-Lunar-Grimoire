@@ -4,13 +4,14 @@ import { FileText } from "lucide-react";
 import { CrystalBallGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL } from "@/lib/cycle";
 import type { DateKey } from "@/lib/dates";
-import { MIN_CYCLES, MIN_ELEMENT_LOGS, POTION_WINDOW, computeInsights } from "@/lib/insights";
+import { MIN_CYCLES, MIN_ELEMENT_LOGS, MIN_REST_DAYS, POTION_WINDOW, computeInsights } from "@/lib/insights";
 import type { Grimoire } from "@/lib/types";
 import { PHASE_BG } from "../CalendarView";
 import { Section } from "../Section";
 import { CycleBars } from "./CycleBars";
 import { ElementGrid, ElementHighlights } from "./ElementGrid";
 import { PotionBars } from "./PotionBars";
+import { RestHighlights, RestTable } from "./RestTable";
 
 function Clouded({ children }: { children: React.ReactNode }) {
   return <p className="font-journal text-lg text-silver-500">🌫️ {children}</p>;
@@ -20,7 +21,7 @@ function Clouded({ children }: { children: React.ReactNode }) {
 export function InsightsView({ g, today, onOpenSummary }: { g: Grimoire; today: DateKey; onOpenSummary: () => void }) {
   const insights = computeInsights(g, today);
   const tracking = g.settings.cycleTracking;
-  const { elements, symptoms, cycles, potions } = insights;
+  const { elements, rest, symptoms, cycles, potions } = insights;
 
   return (
     <div className="space-y-4">
@@ -49,6 +50,20 @@ export function InsightsView({ g, today, onOpenSummary }: { g: Grimoire; today: 
           )}
         </Section>
       )}
+
+      <Section title={tracking ? "Rest & energy through your tide" : "Rest & energy"}>
+        {rest.ready ? (
+          <>
+            <RestHighlights highlights={rest.highlights} />
+            <RestTable rows={rest.rows} />
+          </>
+        ) : (
+          <Clouded>
+            Log your sleep and energy on the day page for {MIN_REST_DAYS - rest.logged} more day{MIN_REST_DAYS - rest.logged === 1 ? "" : "s"}{" "}
+            and your patterns will show here.
+          </Clouded>
+        )}
+      </Section>
 
       {tracking && (
         <Section title="Symptoms through your tide">

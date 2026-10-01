@@ -6,10 +6,11 @@ import { addDaysKey, diffKeys, formatHHMM, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { beginTide, endTide, getDay, loggedElements, reopenTide, setFlow, tideAt } from "@/lib/grimoire";
 import { dispatch } from "@/lib/store";
-import { allDosesOn, doseLog } from "@/lib/potions";
+import { allDosesOn, doseLog, runningLow } from "@/lib/potions";
 import { dueReminders } from "@/lib/reminders";
 import { FLOWS, type Grimoire } from "@/lib/types";
 import { useNow } from "@/lib/useNow";
+import { describeSupply } from "./CabinetView";
 import { Section } from "./Section";
 
 /** After this many days late, add a gentle note that it may be worth checking in with someone. */
@@ -19,6 +20,7 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
   const [endCheckDismissed, setEndCheckDismissed] = useState(false);
   const now = useNow();
   const awaiting = now ? dueReminders(g, today, now) : [];
+  const low = runningLow(g, today);
   const [endDate, setEndDate] = useState(() => addDaysKey(today, -1));
   const day = getDay(g, today);
   const doses = allDosesOn(g, today);
@@ -41,6 +43,16 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
             {awaiting.map((d) => `${d.potion.name} (${formatHHMM(d.time)})`).join(" · ")}
           </span>
         </button>
+      )}
+      {low.length > 0 && (
+        <div className="pixel-frame pixel-frame--gold p-3" role="status">
+          <p className="text-gold-300">🧪 Time to refill</p>
+          {low.map(({ potion, status }) => (
+            <p key={potion.id} className="font-journal text-lg leading-snug text-silver-100">
+              {potion.name}: {describeSupply(status)}
+            </p>
+          ))}
+        </div>
       )}
       {tracking && open && needsEndCheck(g.tides, today) && !endCheckDismissed && (
         <Section title="Has your tide ended?" className="pixel-frame--gold">
