@@ -34,6 +34,14 @@ export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
       {tracking && <Rhythm g={g} />}
       {tracking && <TideHistory g={g} today={today} />}
       <Backups g={g} today={today} />
+      <Section title="Sound">
+        <Choice selected={g.settings.soundEnabled} onClick={() => dispatch((x) => updateSettings(x, { soundEnabled: true }))}>
+          🔊 Rustle the pages
+        </Choice>
+        <Choice selected={!g.settings.soundEnabled} onClick={() => dispatch((x) => updateSettings(x, { soundEnabled: false }))}>
+          🔇 Silent pages
+        </Choice>
+      </Section>
       <Install />
 
       <Section title="About">

@@ -263,7 +263,7 @@ function ElementsSection({ date, day }: { date: DateKey; day: DayEntry }) {
                   aria-checked={log.intensity === n}
                   aria-label={`${n}: ${info.levels[n - 1]}`}
                   onClick={() => edit(log.element, { intensity: n })}
-                  className={`h-7 flex-1 text-sm ${n <= log.intensity ? `${info.bg} text-midnight-950` : "bg-midnight-800 text-silver-500"}`}
+                  className={`h-7 flex-1 font-journal text-xl ${n <= log.intensity ? `${info.bg} text-midnight-950` : "bg-midnight-800 text-silver-500"}`}
                 >
                   {n}
                 </button>
@@ -449,7 +449,7 @@ function PotionRow({ potion, check, extras, onToggle, onAdd, onRemove, onTime }:
               >
                 <Minus size={14} strokeWidth={3} />
               </button>
-              <span aria-live="polite" className="min-w-4 text-center text-sm text-gold-300">
+              <span aria-live="polite" className="min-w-4 text-center font-journal text-xl text-gold-300">
                 {extras.length}
               </span>
             </>

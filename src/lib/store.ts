@@ -57,6 +57,9 @@ export function dispatch(change: (g: Grimoire) => Grimoire) {
   emit();
 }
 
+/** The current Grimoire outside React (e.g. to check a setting from an event handler). */
+export const getGrimoire = (): Grimoire => ensureLoaded().grimoire;
+
 /** Replace everything, e.g. after importing a backup file. */
 export const replaceGrimoire = (grimoire: Grimoire) => dispatch(() => grimoire);
 

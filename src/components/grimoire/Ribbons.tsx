@@ -16,10 +16,18 @@ const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[
 ];
 
 /** Bookmark ribbons hanging off the right edge of the book. */
-export function Ribbons({ active, dayLabel, onSelect }: { active: View | null; dayLabel: string; onSelect: (v: View) => void }) {
+type Props = {
+  active: View | null;
+  dayLabel: string;
+  onSelect: (v: View) => void;
+  /** Sections that are always visible (e.g. the calendar in the two-page spread) need no ribbon. */
+  hide?: View[];
+};
+
+export function Ribbons({ active, dayLabel, onSelect, hide = [] }: Props) {
   return (
     <nav aria-label="Grimoire sections" className="sticky top-4 flex shrink-0 flex-col gap-2 pt-8">
-      {RIBBONS.map((r) => {
+      {RIBBONS.filter((r) => !hide.includes(r.view)).map((r) => {
         const isActive = r.view === active;
         const label = r.view === "day" ? dayLabel : r.label;
         return (

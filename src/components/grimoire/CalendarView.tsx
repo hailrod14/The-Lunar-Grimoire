@@ -109,7 +109,7 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                       key === today ? "outline-2 outline-gold-300" : ""
                     } ${future ? "text-silver-500" : "text-silver-100"}`}
                   >
-                    <span className="flex items-start justify-between text-xs leading-none">
+                    <span className="flex items-start justify-between font-journal text-base leading-none">
                       {d.getDate()}
                       {bled && <BloodDropGlyph size={7} />}
                     </span>

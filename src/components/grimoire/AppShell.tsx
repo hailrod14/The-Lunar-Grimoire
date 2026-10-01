@@ -7,6 +7,7 @@ import { tideDay } from "@/lib/cycle";
 import { diffKeys, type DateKey } from "@/lib/dates";
 import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
 import { dismissLoadProblem, useGrimoireState } from "@/lib/store";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
 import { CalendarView } from "./CalendarView";
@@ -17,6 +18,9 @@ import { DayView } from "./DayView";
 import { JournalView } from "./JournalView";
 import { SettingsView } from "./SettingsView";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
+
+/** Wide enough to lay the book open as two pages side by side. */
+const SPREAD_QUERY = "(min-width: 1100px)";
 
 function Loading() {
   return (
@@ -72,66 +76,112 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
   // The book opens closed, on its cover; the calendar is the first page.
   const [coverOpen, setCoverOpen] = useState(false);
   const { pageRef, overlay, turn } = usePageTurn();
+  // Wide screens lay the book open flat: the calendar on the left page, everything else on the right.
+  const spread = useMediaQuery(SPREAD_QUERY);
+  const rightView: View = spread && view === "calendar" ? "day" : view;
 
   const open = (date: DateKey, v: View = "day") => {
     if (!coverOpen) {
-      turn("forward", () => {
-        setCoverOpen(true);
-        setSelected(date);
-        setView(v);
-      });
+      turn(
+        "forward",
+        () => {
+          setCoverOpen(true);
+          setSelected(date);
+          setView(v);
+        },
+        "leather",
+      );
       return;
     }
-    if (v === view && date === selected) return;
+    const target: View = spread && v === "calendar" ? "day" : v;
+    if (target === rightView && date === selected) return;
     // Later sections and later days turn forward; earlier ones turn back.
     const dir: TurnDirection =
-      v === view ? (diffKeys(date, selected) > 0 ? "forward" : "backward")
-      : RIBBON_ORDER.indexOf(v) > RIBBON_ORDER.indexOf(view) ? "forward"
+      target === rightView ? (diffKeys(date, selected) > 0 ? "forward" : "backward")
+      : RIBBON_ORDER.indexOf(target) > RIBBON_ORDER.indexOf(rightView) ? "forward"
       : "backward";
     turn(dir, () => {
       setSelected(date);
-      setView(v);
-      window.scrollTo({ top: 0 });
+      setView(target);
+      if (!spread) window.scrollTo({ top: 0 });
     });
   };
 
   // The Today and Journal ribbons always open today's page.
   const onRibbon = (v: View) => open(v === "day" || v === "journal" ? today : selected, v);
 
+  const page = (v: View) => (
+    <>
+      {v === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
+      {v === "day" && (
+        <DayView
+          key={selected}
+          g={g}
+          date={selected}
+          today={today}
+          onNavigate={(d) => open(d, "day")}
+          onOpenJournal={() => open(selected, "journal")}
+          onOpenCabinet={() => open(selected, "cabinet")}
+        />
+      )}
+      {v === "journal" && <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />}
+      {v === "cabinet" && <CabinetView g={g} />}
+      {v === "settings" && <SettingsView g={g} today={today} />}
+    </>
+  );
+
+  const ribbons = (
+    <Ribbons
+      active={coverOpen ? rightView : null}
+      dayLabel={rightView === "day" && selected !== today ? "Day" : "Today"}
+      onSelect={onRibbon}
+      hide={spread ? ["calendar"] : []}
+    />
+  );
+
+  // The page that turns: the cover, the single page on phones, or the right-hand page of the spread.
+  const turningPage = (
+    <div className="pixel-frame pixel-frame--gold min-h-[85dvh] min-w-0 flex-1">
+      <div ref={pageRef} className={coverOpen ? "p-3 sm:p-5" : ""}>
+        {coverOpen ? (
+          page(rightView)
+        ) : (
+          <Cover
+            tide={tideDay(today, g.tides, g.settings, today)}
+            tracking={g.settings.cycleTracking}
+            today={today}
+            onOpen={() => open(today, "calendar")}
+          />
+        )}
+      </div>
+      {overlay}
+    </div>
+  );
+
+  if (spread && coverOpen) {
+    return (
+      <main className="mx-auto max-w-6xl px-6 py-6 pb-16">
+        <div className="flex items-start">
+          <div className="flex min-w-0 flex-1 items-stretch">
+            {/* Left page, with the spine's shadow along its inner edge */}
+            <div className="pixel-frame pixel-frame--gold min-h-[85dvh] min-w-0 flex-1 p-5">
+              {page("calendar")}
+              <span aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-3 bg-black/25" />
+            </div>
+            <div aria-hidden className="w-2 shrink-0 bg-gold-900" />
+            {turningPage}
+          </div>
+          {ribbons}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-4 pb-16">
       <div className="flex items-start">
-        <div className="pixel-frame pixel-frame--gold min-h-[85dvh] min-w-0 flex-1">
-          <div ref={pageRef} className={coverOpen ? "p-3 sm:p-5" : ""}>
-            {!coverOpen && (
-              <Cover
-                tide={tideDay(today, g.tides, g.settings, today)}
-                tracking={g.settings.cycleTracking}
-                today={today}
-                onOpen={() => open(today, "calendar")}
-              />
-            )}
-            {coverOpen && view === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
-            {coverOpen && view === "day" && (
-              <DayView
-                key={selected}
-                g={g}
-                date={selected}
-                today={today}
-                onNavigate={(d) => open(d, "day")}
-                onOpenJournal={() => open(selected, "journal")}
-                onOpenCabinet={() => open(selected, "cabinet")}
-              />
-            )}
-            {coverOpen && view === "journal" && (
-              <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />
-            )}
-            {coverOpen && view === "cabinet" && <CabinetView g={g} />}
-            {coverOpen && view === "settings" && <SettingsView g={g} today={today} />}
-          </div>
-          {overlay}
-        </div>
-        <Ribbons active={coverOpen ? view : null} dayLabel={view === "day" && selected !== today ? "Day" : "Today"} onSelect={onRibbon} />
+        {turningPage}
+        {ribbons}
       </div>
     </main>
   );

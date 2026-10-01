@@ -18,7 +18,7 @@ export function JournalView({ g, date, today, onNavigate }: Props) {
   const [writing, setWriting] = useState(() => !text.trim() && date <= today);
   const [showContents, setShowContents] = useState(false);
   const [page, setPage] = useState(0);
-  const { pageRef, overlay, turn } = usePageTurn();
+  const { pageRef, overlay, turn } = usePageTurn("parchment");
 
   const pages = paginate(text);
   const current = Math.min(page, pages.length - 1);
@@ -52,7 +52,7 @@ export function JournalView({ g, date, today, onNavigate }: Props) {
           )}
 
           {!future && (
-            <div className="mt-4 flex items-center justify-between text-sm text-parchment-700">
+            <div className="mt-4 flex items-center justify-between font-journal text-lg text-parchment-700">
               {writing ? (
                 <>
                   <span>

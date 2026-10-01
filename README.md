@@ -8,7 +8,7 @@ The Lunar Grimoire turns your cycle into a personal **Lunar Tide**, your moods i
 
 **🔮 Live app:** https://hailrod14.github.io/The-Lunar-Grimoire/
 
-> 🚧 **Status:** Phase 1 (MVP) is in active development.
+> ✨ **Status:** Phase 1 (MVP) is complete.
 
 ---
 
@@ -86,6 +86,9 @@ Back up everything to a `.json` file and restore it on any device. Import checks
 - See whether your rhythm is learned or estimated, and adjust your estimates.
 - **Tide history:** edit or delete any logged tide, or add past tides so the Grimoire learns your rhythm sooner.
 - Start over by erasing the Grimoire (with a confirmation).
+
+### 📖 A Real Book
+The Grimoire opens on a tooled-leather cover showing your current Tide moon. Pages turn with a pixel page-curl and a soft paper rustle (the cover lands with a gentle thud). Turn sounds off in Settings. On wide screens the book lies open as a two-page spread: the calendar on the left, everything else on the right.
 
 ### 📱 Works Everywhere, Even Offline
 The Grimoire is a **Progressive Web App (PWA)**:
@@ -170,7 +173,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 
 ## 🗺️ Roadmap
 
-**Phase 1: MVP** *(in progress)*
+**Phase 1: MVP** *(complete)*
 - [x] Project setup, pixel design system, and deployment
 - [x] Clickable layout mockup: calendar home, bookmark ribbons, page turns
 - [x] Data storage, cycle math, and moon math, with tests
@@ -178,7 +181,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] The daily page: tide & flow, Mood Elements, potions, and journal
 - [x] The Book & Quill and the Potion & Elixir Cabinet
 - [x] Settings, tide history editing, Export / Import, PWA install, and offline support
-- [ ] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
+- [x] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
 
 **Phase 2: Ideas**
 - [ ] Optional PIN lock screen

@@ -20,7 +20,7 @@ export function Stepper({ label, value, min, max, unit, onChange }: { label: str
       <button type="button" aria-label={`Fewer ${unit}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
         <Minus size={16} strokeWidth={3} />
       </button>
-      <span aria-live="polite" className="min-w-24 text-center text-2xl text-gold-300">
+      <span aria-live="polite" className="min-w-24 text-center font-journal text-3xl text-gold-300">
         {value} <span className="font-journal text-xl text-silver-300">{unit}</span>
       </span>
       <button type="button" aria-label={`More ${unit}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="pixel-button pixel-button--ghost px-3 disabled:opacity-40">
