@@ -7,23 +7,21 @@ import { cleanKeys, cleanReminders, dueNow, isDate, isId, isPushEndpoint, isTime
 
 const ALLOWED_ORIGINS = ["https://hailrod14.github.io", "http://localhost:3000"];
 
-const json = (body, status, origin) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      Vary: "Origin",
-    },
-  });
+const cors = (origin) => ({
+  "Access-Control-Allow-Origin": origin,
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+  Vary: "Origin",
+});
+
+const json = (body, status, origin) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...cors(origin) } });
 
 const worker = {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") ?? "";
     const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-    if (request.method === "OPTIONS") return json({}, 204, allowed);
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(allowed) });
     if (request.method !== "POST") return json({ error: "Not found" }, 404, allowed);
     let body;
     try {

@@ -8,8 +8,8 @@ crons = ["* * * * *"]
 [vars]
 VAPID_SUBJECT = "https://hailrod14.github.io/The-Lunar-Grimoire/"
 
-# database_id is filled in after `wrangler d1 create lunar-grimoire-reminders`
+# The reminder database (created with `wrangler d1 create lunar-grimoire-reminders`)
 [[d1_databases]]
 binding = "DB"
 database_name = "lunar-grimoire-reminders"
-database_id = "TBD"
+database_id = "6c836491-f0ce-4089-a166-fbd123f347ff"
