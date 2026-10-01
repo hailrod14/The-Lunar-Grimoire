@@ -17,6 +17,7 @@ import {
   type DayEntry,
   type Familiar,
   type Grimoire,
+  type Sticker,
   type Occasion,
   type Potion,
   type PotionLog,
@@ -189,6 +190,34 @@ function sanitizeFamiliar(v: unknown): Familiar | undefined {
     ...wearable("neck", v.neck),
     collected: [...new Set(collected.filter((id): id is string => typeof id === "string" && ACCESSORIES.some((a) => a.id === id)))],
     adoptedOn: isDateKey(v.adoptedOn) ? v.adoptedOn : "2026-01-01",
+    stickers: keep(v.stickers, sanitizeSticker),
+    cameos: v.cameos !== false,
+  };
+}
+
+const STICKER_KINDS = ["season", "sabbat", "cycle", "streak"] as const;
+const PHASES = ["dark", "waxing", "full", "waning"] as const;
+
+function sanitizeSticker(v: unknown): Sticker | null {
+  if (!isObj(v) || typeof v.id !== "string" || !oneOf(v.kind, STICKER_KINDS) || !isDateKey(v.date) || !isObj(v.look)) return null;
+  const look = v.look;
+  if (!oneOf(look.species, SPECIES)) return null;
+  const worn = (slot: "head" | "neck") =>
+    typeof look[slot] === "string" && ACCESSORIES.some((a) => a.id === look[slot] && a.slot === slot) ? { [slot]: look[slot] as string } : {};
+  const pct = (n: unknown, fallback: number) => (typeof n === "number" && n >= 0 && n <= 100 ? Math.round(n) : fallback);
+  return {
+    id: v.id.slice(0, 80),
+    kind: v.kind,
+    label: str(v.label).slice(0, 60),
+    date: v.date,
+    mood: oneOf(v.mood, PHASES) ? v.mood : "waxing",
+    ...(typeof v.wearing === "string" && ACCESSORIES.some((a) => a.id === v.wearing) ? { wearing: v.wearing } : {}),
+    look: { species: look.species, coat: numberIn(look.coat, 0, SPECIES_INFO[look.species].coats.length - 1, 0), ...worn("head"), ...worn("neck") },
+    x: pct(v.x, 50),
+    y: pct(v.y, 50),
+    rot: typeof v.rot === "number" && Math.abs(v.rot) <= 30 ? Math.round(v.rot) : 0,
+    onCover: v.onCover === true,
+    isNew: v.isNew === true,
   };
 }
 

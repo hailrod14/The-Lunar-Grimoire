@@ -8,6 +8,7 @@ import { getDay, setJournal } from "@/lib/grimoire";
 import { TAG_PATTERN, allTags, highlight, journalEntries, paginate, searchJournal } from "@/lib/journal";
 import { dispatch } from "@/lib/store";
 import type { Grimoire } from "@/lib/types";
+import { JournalNap } from "./Cameos";
 import { DateNav } from "./DateNav";
 
 type Props = { g: Grimoire; date: DateKey; today: DateKey; onNavigate: (d: DateKey) => void };
@@ -48,6 +49,7 @@ export function JournalView({ g, date, today, onNavigate }: Props) {
       <DateNav date={date} today={today} onNavigate={onNavigate} />
 
       <div className="pixel-frame pixel-frame--parchment">
+        {!future && <JournalNap g={g} />}
         <div ref={pageRef} className="flex min-h-[60dvh] flex-col p-5">
           {future ? (
             <p className="m-auto text-center font-journal text-2xl text-parchment-700">This page is still blank. The day hasn&apos;t come yet.</p>

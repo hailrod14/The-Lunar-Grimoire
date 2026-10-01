@@ -7,7 +7,7 @@ import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, VesselSprite, type LiquidColor } 
 import { BloodDropGlyph, SparkleGlyph, StarGlyph } from "@/components/sprites/Glyphs";
 import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
 import { ACCESSORIES, SPECIES, SPECIES_INFO } from "@/lib/familiars";
-import { JournalDemo, PotionDemo } from "./Demos";
+import { CoverDemo, JournalDemo, PotionDemo } from "./Demos";
 
 export const metadata: Metadata = { title: "Design Altar · The Lunar Grimoire" };
 
@@ -116,6 +116,12 @@ export default function Altar() {
               <VesselSprite vessel="flask" color={c} size={24} /> {c}
             </span>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Cover with stickers">
+        <div id="cover-demo">
+          <CoverDemo />
         </div>
       </Section>
 

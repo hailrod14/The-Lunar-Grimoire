@@ -1,6 +1,7 @@
 import type { DateKey } from "./dates";
 import type { Draw } from "./divination";
 import type { ElementLog, TimeBlock } from "./elements";
+import type { Phase } from "./cycle";
 import type { Species } from "./familiars";
 import type { HolidayRegion } from "./holidays";
 import type { LiquidColor, Vessel } from "./potions";
@@ -135,6 +136,29 @@ export type Familiar = {
   /** Seasonal pieces gathered so far (they stay once collected). */
   collected: string[];
   adoptedOn: DateKey;
+  /** Earned cover stickers. */
+  stickers?: Sticker[];
+  /** Little visits on the day, journal, and cabinet pages. */
+  cameos: boolean;
+};
+
+/** A snapshot of the familiar, earned for a moment worth keeping, that can sit on the cover. */
+export type Sticker = {
+  id: string;
+  kind: "season" | "sabbat" | "cycle" | "streak";
+  label: string;
+  date: DateKey;
+  mood: Phase;
+  /** For a seasonal sticker: the piece it shows off. */
+  wearing?: string;
+  /** How the familiar looked when it was earned. */
+  look: { species: Species; coat: number; head?: string; neck?: string };
+  /** Position on the cover, in percent, and tilt in degrees. */
+  x: number;
+  y: number;
+  rot: number;
+  onCover: boolean;
+  isNew: boolean;
 };
 
 /** 1 (lowest) to 5 (highest). */

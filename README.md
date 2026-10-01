@@ -84,6 +84,8 @@ The calendar marks the eight sabbats (Samhain, Yule, Imbolc, Ostara, Beltane, Li
 ### 🐈‍⬛ Familiars
 Adopt a small companion: a cat, dog, fox, owl, frog, spider, fish, bat, dragon, griffin, or phoenix, in six or seven colours each, with a name of your choosing. Your familiar follows your tide (or the sky's moon if you don't track a cycle): asleep on a cushion in the Dark Moon, curious as it waxes, glowing and hopping at the Full Moon, and tucked in with a cup of tea as it wanes. Tap to pet them. Dress them up from the wardrobe: hats, crowns, and neckwear, plus seasonal pieces (a pumpkin hat in autumn, a Yule hat in December, a flower crown in spring…) that join the wardrobe when their season arrives and stay once collected.
 
+Your familiar sits on the cover as a die-cut sticker of today's mood, and earns more stickers along the way: one for each sabbat, each new cycle, every 7 days of potions in a row, and each seasonal piece. Each keeps the look your familiar had that day, so the cover becomes a scrapbook of your year. Drag stickers anywhere on the cover; choose which ones show from the sticker album. Your familiar also visits other pages: cheering when you check off a potion, napping in the Book & Quill, peeking over the cabinet shelf, and bringing a hot water bottle the day your tide begins (all of which can be switched off).
+
 ### 🌙 Rest, Energy & Prompts
 Log last night's sleep (hours and how you slept) and today's energy on the day page; the Scrying Glass shows how they move through your tide, and the doctor-visit summary includes the averages. Each day's journal offers a prompt suited to your phase, the moon, or the sabbat, and new and full moons come with a small ritual.
 
@@ -232,6 +234,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Familiars that follow your tide, with a seasonal wardrobe
 - [x] Sleep & energy, journal prompts and moon rituals, and the apothecary shelf
 - [x] Home-screen reminders that ring while the app is closed
+- [x] Cover stickers and familiar visits on other pages
 
 **Phase 2**
 - [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock

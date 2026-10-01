@@ -7,11 +7,13 @@ import { tideDay } from "@/lib/cycle";
 import { diffKeys, type DateKey } from "@/lib/dates";
 import { setMusicVolume, startMusic, stopMusic } from "@/lib/music";
 import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
-import { updateSettings } from "@/lib/grimoire";
+import { collectAccessories, updateSettings } from "@/lib/grimoire";
 import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { applyTheme, resolveTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { usePushSync } from "@/lib/push";
+import { familiarMood, newlyInSeason } from "@/lib/familiars";
+import { awardStickers, unawarded } from "@/lib/stickers";
 import { startSync } from "@/lib/sync";
 import { useReminderNotifications } from "@/lib/useReminders";
 import { useToday } from "@/lib/useToday";
@@ -110,7 +112,22 @@ export function AppShell() {
   );
 }
 
+/** Gather seasonal wardrobe pieces and newly earned cover stickers. */
+function useFamiliarRewards(g: Grimoire, today: DateKey) {
+  const fresh = g.familiar ? newlyInSeason(g.familiar, today, g.settings.hemisphere).map((a) => a.id) : [];
+  const earned = unawarded(g, today);
+  const due = [...fresh, ...earned.map((e) => e.id)].join(",");
+  useEffect(() => {
+    if (!due) return;
+    dispatch((x) => {
+      const pieces = x.familiar ? newlyInSeason(x.familiar, today, x.settings.hemisphere).map((a) => a.id) : [];
+      return awardStickers(collectAccessories(x, pieces), unawarded(x, today));
+    });
+  }, [due, today]);
+}
+
 function Book({ g, today }: { g: Grimoire; today: DateKey }) {
+  useFamiliarRewards(g, today);
   const [view, setView] = useState<View>("calendar");
   const [selected, setSelected] = useState<DateKey>(today);
   // The book opens closed, on its cover; the calendar is the first page.
@@ -211,6 +228,8 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
             tide={tideDay(today, g.tides, g.settings, today)}
             tracking={g.settings.cycleTracking}
             today={today}
+            familiar={g.familiar}
+            mood={familiarMood(g, today)}
             onOpen={() => open(today, "calendar")}
           />
         )}

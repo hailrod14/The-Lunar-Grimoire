@@ -39,6 +39,7 @@ import { SkyBadge, TideBadge } from "./Badges";
 import { formatRange } from "./CalendarView";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
+import { PotionCheer } from "./Cameos";
 import { DayOccasions } from "./Occasions";
 import { JournalPrompt } from "./JournalPrompt";
 import { RestSection } from "./RestSection";
@@ -98,6 +99,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
           <RestSection date={date} day={day} />
           <SymptomsSection g={g} date={date} day={day} />
           <PotionsSection g={g} date={date} today={today} day={day} onOpenCabinet={onOpenCabinet} />
+          <PotionCheer g={g} date={date} today={today} />
           <Section title="Journal">
             <JournalPrompt g={g} date={date} today={today} journal={day.journal} />
             <textarea

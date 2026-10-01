@@ -4,7 +4,7 @@ import { beginTide } from "./grimoire";
 import { sanitizeGrimoire } from "./storage";
 import { newGrimoire, type Familiar } from "./types";
 
-const cat: Familiar = { species: "cat", name: "Salem", coat: 0, collected: [], adoptedOn: "2026-10-01" };
+const cat: Familiar = { species: "cat", name: "Salem", coat: 0, collected: [], adoptedOn: "2026-10-01", stickers: [], cameos: true };
 
 describe("familiar sprites", () => {
   it("are 16 × 16 and only use known colours", () => {

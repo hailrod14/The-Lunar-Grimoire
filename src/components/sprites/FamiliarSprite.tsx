@@ -49,10 +49,15 @@ type Props = {
   /** Freeze all motion (e.g. small previews). */
   still?: boolean;
   title?: string;
+  /** Bump this number to make the familiar react (hearts, a squish, its sound), e.g. when a potion is checked off. */
+  reactKey?: number;
 };
 
-export function FamiliarSprite({ familiar, mood, size = 96, interactive = false, still = false, title }: Props) {
-  const [pets, setPets] = useState(0);
+export function FamiliarSprite({ familiar, mood, size = 96, interactive = false, still = false, title, reactKey }: Props) {
+  const [taps, setTaps] = useState(0);
+  // Only reactions after it appeared count: doses already taken don't make it cheer on arrival.
+  const [startKey] = useState(reactKey ?? 0);
+  const pets = taps + Math.max(0, (reactKey ?? 0) - startKey);
   const info = SPECIES_INFO[familiar.species];
   const asleep = mood === "dark";
   const palette = familiarPalette(familiar.species, familiar.coat, asleep);
@@ -110,21 +115,32 @@ export function FamiliarSprite({ familiar, mood, size = 96, interactive = false,
     </svg>
   );
 
-  if (!interactive) return svg;
+  const bubble = pets > 0 && (
+    <span
+      key={pets}
+      aria-live="polite"
+      className="fam-say pointer-events-none absolute -top-2 left-1/2 whitespace-nowrap bg-midnight-950 px-2 py-0.5 font-journal text-base text-gold-300"
+    >
+      {info.sound}
+    </span>
+  );
+
+  if (!interactive) {
+    return reactKey !== undefined ? (
+      <span className="relative inline-block">
+        {svg}
+        {bubble}
+      </span>
+    ) : (
+      svg
+    );
+  }
   return (
     <div className="relative inline-block">
-      <button type="button" onClick={() => setPets((n) => n + 1)} aria-label={`Pet ${title ?? "your familiar"}`} className="block cursor-pointer">
+      <button type="button" onClick={() => setTaps((n) => n + 1)} aria-label={`Pet ${title ?? "your familiar"}`} className="block cursor-pointer">
         {svg}
       </button>
-      {pets > 0 && (
-        <span
-          key={pets}
-          aria-live="polite"
-          className="fam-say pointer-events-none absolute -top-2 left-1/2 whitespace-nowrap bg-midnight-950 px-2 py-0.5 font-journal text-base text-gold-300"
-        >
-          {info.sound}
-        </span>
-      )}
+      {bubble}
     </div>
   );
 }

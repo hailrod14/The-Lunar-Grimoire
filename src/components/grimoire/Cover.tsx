@@ -3,6 +3,11 @@ import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { StarGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL, type TideDay } from "@/lib/cycle";
 import { formatLong, parseKey, type DateKey } from "@/lib/dates";
+import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
+import type { Mood } from "@/lib/familiars";
+import { TODAY_SPOT } from "@/lib/stickers";
+import type { Familiar } from "@/lib/types";
+import { CoverStickers, LiveSticker } from "./Stickers";
 
 /** Tooled-gold corner filigree; mirrored for the other three corners. */
 const CORNER = [
@@ -37,13 +42,14 @@ const FLECKS = [
   [14, 22], [80, 16], [22, 70], [86, 64], [30, 88], [70, 84], [58, 10], [40, 30], [66, 38], [18, 46], [90, 40],
 ];
 
-type Props = { tide: TideDay | null; tracking: boolean; today: DateKey; onOpen: () => void };
+type Props = { tide: TideDay | null; tracking: boolean; today: DateKey; familiar?: Familiar; mood: Mood; onOpen: () => void };
 
-/** The closed grimoire. Tapping anywhere opens it to the calendar. */
-export function Cover({ tide, tracking, today, onOpen }: Props) {
+/** The closed grimoire. Tapping anywhere opens it to the calendar; stickers can be dragged around. */
+export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) {
   const phase = tracking && tide ? PHASE_LABEL[tide.phase] : null;
 
   return (
+    <div className="relative">
     <button
       type="button"
       onClick={onOpen}
@@ -125,6 +131,20 @@ export function Cover({ tide, tracking, today, onOpen }: Props) {
           ✦ Tap to open ✦
         </span>
       </span>
+
+      {familiar && (
+        <span
+          aria-hidden
+          className="absolute -translate-x-1/2 -translate-y-1/2 -rotate-6"
+          style={{ left: `${TODAY_SPOT[0]}%`, top: `${TODAY_SPOT[1]}%` }}
+        >
+          <LiveSticker>
+            <FamiliarSprite familiar={familiar} mood={mood} size={80} />
+          </LiveSticker>
+        </span>
+      )}
     </button>
+    {familiar && <CoverStickers stickers={(familiar.stickers ?? []).filter((s) => s.onCover)} />}
+    </div>
   );
 }

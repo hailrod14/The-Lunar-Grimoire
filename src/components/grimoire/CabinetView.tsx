@@ -8,6 +8,7 @@ import { archivePotion, countSupply, deletePotion, potionHasHistory, savePotion 
 import { VESSEL_NAMES, describeSchedule, stamp, supplyLeft, supplyStatus, type SupplyStatus } from "@/lib/potions";
 import { dispatch } from "@/lib/store";
 import type { Grimoire, Potion } from "@/lib/types";
+import { ShelfPeek } from "./Cameos";
 import { BLANK_POTION, PotionForm, type PotionDraft } from "./PotionForm";
 import { Section } from "./Section";
 
@@ -107,6 +108,7 @@ export function CabinetView({ g, today }: { g: Grimoire; today: DateKey }) {
         Your potions live here. Check them off on each day&apos;s page, and keep count of your supply so you know when to refill.
       </p>
 
+      <ShelfPeek g={g} today={today} />
       {active.length === 0 ? (
         <p className="pixel-frame p-4 text-center font-journal text-xl text-silver-300">The shelves are empty. Brew your first potion.</p>
       ) : (

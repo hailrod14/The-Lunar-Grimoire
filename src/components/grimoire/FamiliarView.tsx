@@ -20,10 +20,13 @@ import {
   type Slot,
   type Species,
 } from "@/lib/familiars";
-import { adoptFamiliar, collectAccessories, updateFamiliar } from "@/lib/grimoire";
+import { adoptFamiliar, updateFamiliar } from "@/lib/grimoire";
+import { MAX_ON_COVER, newStickers, seenStickers, setOnCover, tidyStickers } from "@/lib/stickers";
 import { dispatch } from "@/lib/store";
 import type { Familiar, Grimoire } from "@/lib/types";
+import { Choice } from "./Controls";
 import { Section } from "./Section";
+import { StickerArt, stickerTitle } from "./Stickers";
 
 const MOOD_TITLE: Record<Mood, string> = {
   dark: "Sleepy",
@@ -49,6 +52,7 @@ export function FamiliarCard({ g, today, onOpen }: { g: Grimoire; today: DateKey
   }
   const mood = familiarMood(g, today);
   const fresh = newlyInSeason(f, today, g.settings.hemisphere);
+  const tideBeganToday = g.settings.cycleTracking && g.tides.some((t) => t.start === today);
   return (
     <button
       type="button"
@@ -61,8 +65,15 @@ export function FamiliarCard({ g, today, onOpen }: { g: Grimoire; today: DateKey
         <span className="block text-gold-300">
           {f.name} · {MOOD_TITLE[mood]}
         </span>
-        <span className="block text-silver-300">{moodLine(f, mood)}</span>
+        <span className="block text-silver-300">
+          {tideBeganToday ? `${f.name} brought you a warm blanket and a hot water bottle. Take it easy today.` : moodLine(f, mood)}
+        </span>
         {fresh.length > 0 && <span className="block text-gold-300">✨ New in the wardrobe: {fresh.map((a) => a.name).join(", ")}</span>}
+        {newStickers(f).length > 0 && (
+          <span className="block text-gold-300">
+            ✨ New sticker{newStickers(f).length > 1 ? "s" : ""} for your cover: {newStickers(f).map((s) => s.label).join(", ")}
+          </span>
+        )}
       </span>
     </button>
   );
@@ -70,13 +81,6 @@ export function FamiliarCard({ g, today, onOpen }: { g: Grimoire; today: DateKey
 
 export function FamiliarView({ g, today }: { g: Grimoire; today: DateKey }) {
   const f = g.familiar;
-  const hemisphere = g.settings.hemisphere;
-
-  // Seasonal pieces join the wardrobe once their season comes around.
-  const freshIds = f ? newlyInSeason(f, today, hemisphere).map((a) => a.id).join(",") : "";
-  useEffect(() => {
-    if (freshIds) dispatch((x) => collectAccessories(x, freshIds.split(",")));
-  }, [freshIds]);
 
   if (!f) return <Adopt today={today} />;
 
@@ -96,6 +100,7 @@ export function FamiliarView({ g, today }: { g: Grimoire; today: DateKey }) {
       </div>
 
       <Wardrobe f={f} today={today} g={g} mood={mood} />
+      <StickerAlbum f={f} />
       <Appearance f={f} />
     </div>
   );
@@ -166,6 +171,57 @@ function Wardrobe({ f, g, today, mood }: { f: Familiar; g: Grimoire; today: Date
   );
 }
 
+function StickerAlbum({ f }: { f: Familiar }) {
+  const stickers = f.stickers ?? [];
+  const onCover = stickers.filter((s) => s.onCover).length;
+  const unseen = stickers.some((s) => s.isNew);
+  useEffect(() => {
+    if (unseen) dispatch(seenStickers);
+  }, [unseen]);
+
+  return (
+    <Section title="Sticker album">
+      <p className="font-journal text-lg text-silver-300">
+        {f.name} earns a sticker for each sabbat, each new cycle, every 7 days of potions in a row, and each seasonal piece. Stickers
+        on the cover can be dragged anywhere on it.
+      </p>
+      {stickers.length === 0 ? (
+        <p className="font-journal text-lg text-silver-500">No stickers yet. The next sabbat or new cycle brings the first.</p>
+      ) : (
+        <>
+          <p className="text-sm text-silver-300">
+            {onCover} of {MAX_ON_COVER} on the cover
+          </p>
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1">
+            {[...stickers].reverse().map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  aria-pressed={s.onCover}
+                  disabled={!s.onCover && onCover >= MAX_ON_COVER}
+                  onClick={() => dispatch((x) => setOnCover(x, s.id, !s.onCover))}
+                  className={`flex w-full flex-col items-center gap-1 p-2 ${s.onCover ? "bg-midnight-600 outline-2 outline-gold-300" : "bg-midnight-950 hover:bg-midnight-700"} disabled:opacity-50`}
+                >
+                  <span className="py-1" style={{ transform: `rotate(${s.rot}deg)` }}>
+                    <StickerArt sticker={s} size={52} />
+                  </span>
+                  <span className="font-journal text-base leading-tight text-silver-100">{stickerTitle(s)}</span>
+                  <span className="font-journal text-sm leading-tight text-silver-500">{s.onCover ? "On the cover" : "In the album"}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {onCover > 0 && (
+            <button type="button" onClick={() => dispatch(tidyStickers)} className="pixel-button pixel-button--ghost">
+              Tidy the cover
+            </button>
+          )}
+        </>
+      )}
+    </Section>
+  );
+}
+
 function CoatPicker({ species, coat, onPick }: { species: Species; coat: number; onPick: (n: number) => void }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-1" role="group" aria-label="Colours">
@@ -225,6 +281,12 @@ function Appearance({ f }: { f: Familiar }) {
 
   return (
     <Section title="Appearance">
+      <Choice selected={f.cameos} onClick={() => set({ cameos: !f.cameos })}>
+        {f.cameos ? `✓ ${f.name} visits other pages` : `${f.name} stays on their own page`}
+      </Choice>
+      <p className="font-journal text-base text-silver-500">
+        Visits: cheering when you take a potion, napping in the Book &amp; Quill, and peeking over the cabinet.
+      </p>
       <NameInput
         value={name}
         onChange={(v) => {
@@ -293,7 +355,7 @@ function Adopt({ today }: { today: DateKey }) {
             type="button"
             disabled={!name.trim()}
             onClick={() =>
-              dispatch((x) => adoptFamiliar(x, { species, coat, name: name.trim(), collected: [], adoptedOn: today }))
+              dispatch((x) => adoptFamiliar(x, { species, coat, name: name.trim(), collected: [], adoptedOn: today, stickers: [], cameos: true }))
             }
             className="pixel-button pixel-button--gold disabled:opacity-40"
           >
