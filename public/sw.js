@@ -2,7 +2,7 @@
 // device so it opens and works offline. Your data is never touched here —
 // it lives in localStorage, not in this cache.
 
-const CACHE = "lunar-grimoire-v13";
+const CACHE = "lunar-grimoire-v14";
 /** Potion names for reminder text, written by the app only if names are allowed in reminders. */
 const LABELS = "lunar-grimoire-labels";
 

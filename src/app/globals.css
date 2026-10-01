@@ -497,3 +497,11 @@ svg[shape-rendering="crispEdges"] {
   15%, 75% { opacity: 1; transform: translate(-50%, 0); }
   100% { opacity: 0; transform: translate(-50%, -4px); }
 }
+
+/* The combination lock rattles when the code is wrong. */
+@keyframes lock-rattle {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.lock-rattle { animation: lock-rattle 400ms steps(5, end); }

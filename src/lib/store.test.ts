@@ -34,6 +34,7 @@ describe("the PIN lock", () => {
     await store.setPin("2468");
     expect(saved()).not.toContain("Moonlit");
     expect(JSON.parse(saved()).kind).toBe("lunar-grimoire-sealed");
+    expect(JSON.parse(saved()).digits).toBe(4); // the lock shows four wheels
 
     // Changes made while unlocked are saved encrypted too.
     store.dispatch((g) => ({ ...g, days: { ...g.days, "2026-10-01": { ...emptyDayFor(), journal: "Second secret" } } }));

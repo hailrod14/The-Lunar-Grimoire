@@ -40,29 +40,20 @@ const FLECKS = [
   [14, 22], [80, 16], [22, 70], [86, 64], [30, 88], [70, 84], [58, 10], [40, 30], [66, 38], [18, 46], [90, 40],
 ];
 
-type Props = { tide: TideDay | null; tracking: boolean; today: DateKey; familiar?: Familiar; mood: Mood; onOpen: () => void };
+/** Leather grain: two faint offset pixel checkers. */
+export const LEATHER: React.CSSProperties = {
+  backgroundColor: "var(--cover-leather)",
+  backgroundImage:
+    "linear-gradient(45deg, rgb(0 0 0 / 0.14) 25%, transparent 25%, transparent 75%, rgb(0 0 0 / 0.14) 75%)," +
+    "linear-gradient(45deg, rgb(255 255 255 / 0.03) 25%, transparent 25%, transparent 75%, rgb(255 255 255 / 0.03) 75%)",
+  backgroundSize: "8px 8px, 8px 8px",
+  backgroundPosition: "0 0, 4px 4px",
+};
 
-/** The closed grimoire. Tapping anywhere opens it to the calendar; stickers can be dragged around. */
-export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) {
-  const phase = tracking && tide ? PHASE_LABEL[tide.phase] : null;
-
+/** The spine, tooled border, gilt corners, gold flecks, and (unless it's locked shut) the little strap and clasp. */
+export function CoverDecor({ clasp = true }: { clasp?: boolean }) {
   return (
-    <div className="relative">
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label="Open the Grimoire"
-      className="cover-gilt group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
-      style={{
-        backgroundColor: "var(--cover-leather)",
-        // Leather grain: two faint offset pixel checkers.
-        backgroundImage:
-          "linear-gradient(45deg, rgb(0 0 0 / 0.14) 25%, transparent 25%, transparent 75%, rgb(0 0 0 / 0.14) 75%)," +
-          "linear-gradient(45deg, rgb(255 255 255 / 0.03) 25%, transparent 25%, transparent 75%, rgb(255 255 255 / 0.03) 75%)",
-        backgroundSize: "8px 8px, 8px 8px",
-        backgroundPosition: "0 0, 4px 4px",
-      }}
-    >
+    <>
       {/* Spine with raised gold bands */}
       <span aria-hidden className="absolute inset-y-0 left-0 w-5 bg-(--cover-spine) shadow-[inset_-4px_0_0_rgb(0_0_0/0.35)]">
         {[12, 30, 50, 70, 88].map((top) => (
@@ -88,13 +79,34 @@ export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) 
       ))}
 
       {/* Strap and clasp across the fore-edge */}
-      <span aria-hidden className="absolute top-[80%] right-0 flex -translate-y-1/2 items-center">
-        <span className="grid size-7 place-items-center bg-gold-500 shadow-[inset_-4px_-4px_0_#b07a1c,inset_4px_4px_0_#fff4c2]">
-          <span className="size-2.5 bg-(--cover-spine)" />
+      {clasp && (
+        <span aria-hidden className="absolute top-[80%] right-0 flex -translate-y-1/2 items-center">
+          <span className="grid size-7 place-items-center bg-gold-500 shadow-[inset_-4px_-4px_0_#b07a1c,inset_4px_4px_0_#fff4c2]">
+            <span className="size-2.5 bg-(--cover-spine)" />
+          </span>
+          <span className="h-10 w-9 border-y-4 border-dashed border-gold-900 bg-(--cover-spine)" />
         </span>
-        <span className="h-10 w-9 border-y-4 border-dashed border-gold-900 bg-(--cover-spine)" />
-      </span>
+      )}
+    </>
+  );
+}
 
+type Props = { tide: TideDay | null; tracking: boolean; today: DateKey; familiar?: Familiar; mood: Mood; onOpen: () => void };
+
+/** The closed grimoire. Tapping anywhere opens it to the calendar; stickers can be dragged around. */
+export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) {
+  const phase = tracking && tide ? PHASE_LABEL[tide.phase] : null;
+
+  return (
+    <div className="relative">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label="Open the Grimoire"
+      className="cover-gilt group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
+      style={LEATHER}
+    >
+      <CoverDecor />
       <span className="relative flex min-h-[85dvh] flex-col items-center justify-center gap-6 pr-10 pl-14">
         <span className="pixel-title text-3xl leading-tight sm:text-4xl">
           The Lunar

@@ -19,10 +19,12 @@ export type SealedGrimoire = {
   /** Base64 ciphertext of the Grimoire's JSON. */
   data: string;
   rounds: number;
+  /** How many digits the PIN has, so the lock shows that many wheels (like a real combination lock). */
+  digits?: number;
 };
 
 /** A derived key plus what's needed to store alongside it. */
-export type Seal = { key: CryptoKey; salt: string; rounds: number };
+export type Seal = { key: CryptoKey; salt: string; rounds: number; digits: number };
 
 export const toBase64 = (bytes: Uint8Array) => {
   let binary = "";
@@ -55,13 +57,21 @@ export async function deriveSeal(pin: string, salt?: string, rounds = PBKDF2_ROU
     false,
     ["encrypt", "decrypt"],
   );
-  return { key, salt: toBase64(saltBytes), rounds };
+  return { key, salt: toBase64(saltBytes), rounds, digits: pin.length };
 }
 
 export async function sealText(text: string, seal: Seal): Promise<SealedGrimoire> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, seal.key, new TextEncoder().encode(text));
-  return { kind: "lunar-grimoire-sealed", v: 1, salt: seal.salt, iv: toBase64(iv), data: toBase64(new Uint8Array(cipher)), rounds: seal.rounds };
+  return {
+    kind: "lunar-grimoire-sealed",
+    v: 1,
+    salt: seal.salt,
+    iv: toBase64(iv),
+    data: toBase64(new Uint8Array(cipher)),
+    rounds: seal.rounds,
+    digits: seal.digits,
+  };
 }
 
 /** Decrypt, or throw if the key is wrong or the data was altered. */

@@ -176,22 +176,37 @@ export const dismissLoadProblem = () => setOpen({ problem: undefined });
 
 // ── The PIN lock ─────────────────────────────────────────────
 
-/** Try a PIN. Resolves true and opens the Grimoire if it's right. */
-export async function unlock(pin: string): Promise<boolean> {
+/**
+ * Check a PIN without opening yet. Resolves to a function that opens the
+ * Grimoire (so a lock can finish its opening animation first), or null if
+ * the PIN is wrong.
+ */
+export async function prepareUnlock(pin: string): Promise<(() => void) | null> {
   const current = ensureLoaded();
-  if (current.status !== "locked") return true;
+  if (current.status !== "locked") return () => {};
   const attempt = await deriveSeal(pin, current.sealed.salt, current.sealed.rounds);
   let grimoire: Grimoire;
   try {
     grimoire = await openSealed(current.sealed, attempt.key);
   } catch {
-    return false;
+    return null;
   }
-  seal = attempt;
-  companion = await readCompanionSealed(attempt.key);
-  state = { status: "open", grimoire, saveFailed: false, pinSet: true };
-  emit();
-  return true;
+  const record = await readCompanionSealed(attempt.key);
+  return () => {
+    seal = attempt;
+    companion = record;
+    state = { status: "open", grimoire, saveFailed: false, pinSet: true };
+    emit();
+    // Saves from before the lock knew the code's length: record it, so the lock shows the right wheels next time.
+    if (!current.sealed.digits) void persist(grimoire);
+  };
+}
+
+/** Try a PIN. Resolves true and opens the Grimoire if it's right. */
+export async function unlock(pin: string): Promise<boolean> {
+  const open = await prepareUnlock(pin);
+  open?.();
+  return open !== null;
 }
 
 /** Whether `pin` opens the currently saved Grimoire. */
