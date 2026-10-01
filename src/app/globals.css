@@ -513,3 +513,25 @@ svg[shape-rendering="crispEdges"] {
 }
 .lock-fall { animation: lock-fall 900ms steps(9, end) forwards; }
 .strap-fall { animation: lock-fall 900ms steps(9, end) 120ms forwards; }
+
+/* The lock's knob catches the light now and then, so it reads as something to press. */
+@keyframes knob-glint {
+  0%, 82%, 100% { opacity: 0; }
+  88% { opacity: 1; }
+}
+.knob-glint { animation: knob-glint 3.5s steps(1, end) infinite; }
+
+/* Stickers resting on the locked cover breathe a little. */
+@keyframes sticker-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.sticker-idle { animation: sticker-idle 3.2s steps(2, end) infinite; }
+
+/* Sparkles drifting up past the moon. */
+@keyframes drift-up {
+  0% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(6px, -36px); opacity: 0; }
+}
+.drift-up { animation: drift-up 5s steps(10, end) infinite; }

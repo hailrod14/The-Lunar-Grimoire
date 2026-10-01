@@ -123,5 +123,11 @@ export function CombinationLockDemo() {
       // Just the plain cover, then.
     }
   });
-  return <LockScreen />;
+  // ?w=340 previews a narrower phone.
+  const [width] = useState(() => (typeof window === "undefined" ? null : Number(new URLSearchParams(window.location.search).get("w")) || null));
+  return (
+    <div style={width ? { maxWidth: width } : undefined}>
+      <LockScreen />
+    </div>
+  );
 }

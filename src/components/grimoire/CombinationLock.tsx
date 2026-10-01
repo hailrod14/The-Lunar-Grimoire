@@ -22,7 +22,7 @@ const digitOf = (pos: number) => ((pos % 10) + 10) % 10;
 
 /** The lock's on-screen size, scaled to fit. */
 export function lockMetrics(digits: number) {
-  const layout = strapLock(digits);
+  const layout = strapLock(digits, "right");
   const scale = Math.min(1, MAX_WIDTH / layout.width);
   return { width: layout.width * scale, height: layout.height * scale, scale, strapTop: layout.strapTop * scale };
 }
@@ -113,15 +113,18 @@ type Props = {
   disabled: boolean;
   /** Resolves true if the lock opened. */
   onTry: (code: string) => Promise<boolean>;
+  /** Something sitting on top of the lock (the familiar likes to perch there). */
+  perch?: React.ReactNode;
 };
 
-export function CombinationLock({ digits, disabled, onTry }: Props) {
+export function CombinationLock({ digits, disabled, onTry, perch }: Props) {
   const [positions, setPositions] = useState<number[]>(() => Array(digits).fill(0));
   const [state, setState] = useState<"shut" | "rattle" | "open">("shut");
   const wheels = useRef<(HTMLDivElement | null)[]>([]);
 
-  const layout = strapLock(digits);
+  const layout = strapLock(digits, "right");
   const { scale } = lockMetrics(digits);
+  const [pressed, setPressed] = useState(false);
 
   const pos = Array.from({ length: digits }, (_, i) => positions[i] ?? 0);
   const roll = (i: number, p: number) => setPositions(pos.map((x, j) => (j === i ? p : x)));
@@ -154,7 +157,7 @@ export function CombinationLock({ digits, disabled, onTry }: Props) {
   const shut = disabled || state === "open";
 
   return (
-    <div style={{ width: layout.width * scale, height: layout.height * scale }}>
+    <div className="relative" style={{ width: layout.width * scale, height: layout.height * scale }}>
       <div
         className={`relative origin-top-left ${state === "rattle" ? "lock-rattle" : ""} ${state === "open" ? "lock-fall" : ""}`}
         style={{ width: layout.width, height: layout.height, transform: scale < 1 ? `scale(${scale})` : undefined }}
@@ -186,17 +189,39 @@ export function CombinationLock({ digits, disabled, onTry }: Props) {
           ))}
         </div>
 
-        {/* The round knob: press it to open */}
+        {/* The round knob: press it to open. It glints now and then, lights on hover, and sinks when pressed. */}
         <button
           type="button"
           onClick={() => void tryOpen()}
+          onPointerDown={() => setPressed(true)}
+          onPointerUp={() => setPressed(false)}
+          onPointerLeave={() => setPressed(false)}
           disabled={shut}
           aria-label="Press the knob to open the lock"
           title="Press to open"
-          className="absolute rounded-full hover:bg-[#fff4c2]/25 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#e6d29a] active:translate-x-px active:translate-y-px disabled:cursor-default"
+          className="group/knob absolute rounded-full focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#e6d29a] disabled:cursor-default"
           style={{ left: layout.knob.left, top: layout.knob.top, width: layout.knob.size, height: layout.knob.size }}
-        />
+        >
+          <span
+            aria-hidden
+            className={`absolute inset-0 rounded-full transition-[box-shadow,background-color] duration-100 ${
+              pressed
+                ? "bg-black/30 shadow-[inset_3px_3px_0_rgb(0_0_0/0.45)]"
+                : "group-hover/knob:bg-[#fff4c2]/25 group-hover/knob:shadow-[0_0_0_3px_rgb(255_244_194/0.55)]"
+            }`}
+          />
+          {!shut && <span aria-hidden className="knob-glint absolute top-[22%] left-[22%] size-1.5 bg-[#fff4c2]" />}
+        </button>
       </div>
+      {perch && (
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute z-40 -translate-x-1/2 ${state === "open" ? "lock-fall" : ""}`}
+          style={{ left: (layout.window.left + layout.window.width / 2) * scale, bottom: layout.height * scale - 26 }}
+        >
+          {perch}
+        </div>
+      )}
       <p className="sr-only" aria-live="polite">
         {state === "open" ? "Unlocked." : ""}
       </p>

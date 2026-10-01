@@ -5,8 +5,10 @@ import { Minus, Plus } from "lucide-react";
 import { readCoverSnapshot } from "@/lib/coverSnapshot";
 import { dateKey } from "@/lib/dates";
 import { eraseEverything, prepareUnlock, useGrimoireState } from "@/lib/store";
-import { CombinationLock } from "./CombinationLock";
+import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
+import { CombinationLock, lockMetrics } from "./CombinationLock";
 import { LockedCover } from "./Cover";
+import { LiveSticker } from "./Stickers";
 
 /** After this many wrong tries, wait before the next one. */
 const FREE_TRIES = 5;
@@ -66,61 +68,88 @@ export function LockScreen() {
       ? `The lock is stiff. Try again in ${waiting} s.`
       : wrong > 0
         ? "The lock holds fast."
-        : "Roll in your code, then press the knob.";
+        : "Roll in your code, then press the round knob.";
 
-  const notes = (
-    <div className={`flex flex-col items-end gap-1 text-right ${opening ? "opacity-0 transition-opacity" : ""}`}>
-      {known === undefined && (
-        <div className="flex items-center gap-1 bg-black/40 px-2" role="group" aria-label="How many digits is your code?">
-          <span className="font-journal text-base text-gold-100">Digits</span>
-          <button
-            type="button"
-            aria-label="One fewer wheel"
-            disabled={chosen <= MIN_DIGITS}
-            onClick={() => setChosen((n) => n - 1)}
-            className="grid size-7 place-items-center text-gold-300 disabled:opacity-40"
-          >
-            <Minus size={14} strokeWidth={3} />
-          </button>
-          <span className="font-journal text-lg text-gold-300">{chosen}</span>
-          <button
-            type="button"
-            aria-label="One more wheel"
-            disabled={chosen >= MAX_DIGITS}
-            onClick={() => setChosen((n) => n + 1)}
-            className="grid size-7 place-items-center text-gold-300 disabled:opacity-40"
-          >
-            <Plus size={14} strokeWidth={3} />
-          </button>
-        </div>
-      )}
-      <p role="status" className="bg-black/40 px-2 font-journal text-base leading-tight text-gold-100">
-        {status}
-      </p>
-      {forgot === "no" && (
-        <button type="button" onClick={() => setForgot("asking")} className="font-journal text-base text-gold-300 underline">
-          Forgot your code?
-        </button>
-      )}
+  // A parchment tag tied to the lock: what to do, or what went wrong.
+  const tag = (
+    <div className={`flex flex-col items-end ${opening ? "opacity-0 transition-opacity duration-300" : ""}`}>
+      <span aria-hidden className="mr-10 h-3 w-0.5 bg-parchment-500" />
+      <div className="pixel-frame pixel-frame--parchment max-w-64 space-y-1 px-3 py-1.5 text-right font-journal text-base leading-tight">
+        <p role="status">{status}</p>
+        {known === undefined && (
+          <div className="flex items-center justify-end gap-1" role="group" aria-label="How many digits is your code?">
+            <span>Digits</span>
+            <button
+              type="button"
+              aria-label="One fewer wheel"
+              disabled={chosen <= MIN_DIGITS}
+              onClick={() => setChosen((n) => n - 1)}
+              className="grid size-7 place-items-center disabled:opacity-40"
+            >
+              <Minus size={14} strokeWidth={3} />
+            </button>
+            <span className="text-lg">{chosen}</span>
+            <button
+              type="button"
+              aria-label="One more wheel"
+              disabled={chosen >= MAX_DIGITS}
+              onClick={() => setChosen((n) => n + 1)}
+              className="grid size-7 place-items-center disabled:opacity-40"
+            >
+              <Plus size={14} strokeWidth={3} />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
+  const metrics = lockMetrics(digits);
+
   return (
-    <main className="mx-auto max-w-2xl px-4 py-4">
+    <main className="mx-auto max-w-2xl px-4 py-4 pb-36">
       <h1 className="sr-only">The Lunar Grimoire is locked</h1>
-      <div className="pixel-frame pixel-frame--gold">
-        <LockedCover
-          today={today}
-          familiar={cover?.familiar}
-          stickers={cover?.stickers ?? []}
-          opening={opening}
-          lock={<CombinationLock key={digits} digits={digits} disabled={busy || waiting > 0} onTry={tryCode} />}
-          notes={notes}
-        />
+      <div className="relative">
+        <div className="pixel-frame pixel-frame--gold">
+          <LockedCover
+            today={today}
+            familiar={cover?.familiar}
+            stickers={cover?.stickers ?? []}
+            opening={opening}
+            lockWidth={metrics.width}
+            lockHeight={metrics.height}
+            lock={
+              <CombinationLock
+                key={digits}
+                digits={digits}
+                disabled={busy || waiting > 0}
+                onTry={tryCode}
+                perch={
+                  cover && (
+                    <LiveSticker>
+                      <FamiliarSprite familiar={cover.familiar} mood="waxing" size={64} />
+                    </LiveSticker>
+                  )
+                }
+              />
+            }
+            tag={tag}
+          />
+        </div>
+
+        {/* A bookmark ribbon hanging from the bottom of the book */}
+        <button
+          type="button"
+          onClick={() => setForgot((f) => (f === "no" ? "asking" : "no"))}
+          aria-expanded={forgot !== "no"}
+          className="absolute top-full left-16 -mt-1 flex h-28 w-8 flex-col items-center bg-[#6b44b8] pt-2 text-violet-100 shadow-[3px_3px_0_rgb(0_0_0/0.35)] [clip-path:polygon(0_0,100%_0,100%_100%,50%_86%,0_100%)] hover:brightness-110 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-gold-300"
+        >
+          <span className="text-sm [writing-mode:vertical-rl]">Forgot code?</span>
+        </button>
       </div>
 
       {forgot !== "no" && (
-        <div className="pixel-frame pixel-frame--parchment mt-4 space-y-2 p-3 font-journal text-lg">
+        <div className="pixel-frame pixel-frame--parchment mt-32 space-y-2 p-3 font-journal text-lg">
           <p>
             Without the code this Grimoire can&apos;t be opened. That&apos;s what keeps it private. You can erase it and start fresh, then
             restore a backup file or your synced copy if you have one.

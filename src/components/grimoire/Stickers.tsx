@@ -50,7 +50,21 @@ type Item = { id: string; x: number; y: number; rot: number; title: string; art:
  * it (it stays where you drop it, on every device); tap one to see what it's for.
  * They sit above the cover rather than inside it, so touching one never opens the book.
  */
-export function CoverStickers({ stickers, familiar, mood, readOnly = false }: { stickers: Sticker[]; familiar: Familiar; mood: Mood; readOnly?: boolean }) {
+type CoverStickersProps = {
+  stickers: Sticker[];
+  familiar: Familiar;
+  mood: Mood;
+  /** Shown but not movable (the locked cover). */
+  readOnly?: boolean;
+  /** Leave today's familiar out (it's sitting somewhere else). */
+  hideToday?: boolean;
+  /** A gentle resting motion. */
+  idle?: boolean;
+  /** Sticker size in pixels. */
+  size?: number;
+};
+
+export function CoverStickers({ stickers, familiar, mood, readOnly = false, hideToday = false, idle = false, size = 56 }: CoverStickersProps) {
   const layer = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; moved: boolean } | null>(null);
   const [shown, setShown] = useState<string | null>(null);
@@ -63,10 +77,10 @@ export function CoverStickers({ stickers, familiar, mood, readOnly = false }: { 
       y: s.y,
       rot: s.rot,
       title: stickerTitle(s),
-      art: <StickerArt sticker={s} size={56} />,
+      art: <StickerArt sticker={s} size={size} />,
       onDrop: (x: number, y: number) => dispatch((g) => moveSticker(g, s.id, x, y)),
     })),
-    {
+    ...(hideToday ? [] : [{
       id: "today",
       x: spot.x,
       y: spot.y,
@@ -78,7 +92,7 @@ export function CoverStickers({ stickers, familiar, mood, readOnly = false }: { 
         </LiveSticker>
       ),
       onDrop: (x: number, y: number) => dispatch((g) => updateFamiliar(g, { coverSpot: { x: Math.round(x), y: Math.round(y) } })),
-    },
+    }]),
   ];
 
   const toPercent = (clientX: number, clientY: number) => {
@@ -124,7 +138,13 @@ export function CoverStickers({ stickers, familiar, mood, readOnly = false }: { 
             }}
             onPointerCancel={() => setDrag(null)}
           >
-            {s.art}
+            {idle ? (
+              <span className="sticker-idle block" style={{ animationDelay: `${(s.x % 7) * 0.4}s` }}>
+                {s.art}
+              </span>
+            ) : (
+              s.art
+            )}
             {shown === s.id && (
               <span className="absolute top-full left-1/2 mt-1 -translate-x-1/2 bg-midnight-950 px-2 py-0.5 font-journal text-base whitespace-nowrap text-gold-300">
                 {s.title}

@@ -43,7 +43,12 @@ export type LockLayout = {
   strapTop: number;
 };
 
-export function strapLock(digits: number): LockLayout {
+/**
+ * The lock for a code of `digits` digits. Facing "right", the end plate is on
+ * the left (where a strap from the spine feeds in) and the nose points to
+ * the fore-edge.
+ */
+export function strapLock(digits: number, facing: "left" | "right" = "left"): LockLayout {
   const windowPx = digits * WHEEL_PX + (digits - 1) * WHEEL_GAP_PX + 8;
   const windowArt = Math.ceil(windowPx / ART);
   const wheelsTo = WHEELS_FROM + windowArt; // exclusive
@@ -63,7 +68,10 @@ export function strapLock(digits: number): LockLayout {
       const px = x - plateFrom;
       if (y === 0 || y === H - 1 || px === 0 || px === PLATE - 1) return "o";
       if ((px === 2 || px === PLATE - 3) && (y === 3 || y === H - 4)) return "h"; // rivets
-      if (px === 4 && y > 5 && y < H - 6) return "D"; // the strap slot
+      // A keyhole: a round top over a narrow slot.
+      const kh = Math.hypot(px - 4.5, y - (MID - 1.5));
+      if (kh <= 1.7 || (px >= 4 && px <= 5 && y >= MID - 1 && y <= MID + 3)) return "w";
+      if (kh <= 2.6 || (px >= 3 && px <= 6 && y >= MID - 1 && y <= MID + 4)) return "D";
       if (y === 1 || px === 1) return "h";
       if (y === H - 2 || px === PLATE - 2) return "D";
       return px < 4 ? "G" : "g";
@@ -105,12 +113,16 @@ export function strapLock(digits: number): LockLayout {
   }
 
   const knobSize = Math.round(KNOB.r * 2 * ART);
+  const width = W * ART;
+  const knob = { left: Math.round((KNOB.x + 0.5) * ART - knobSize / 2), top: Math.round((KNOB.y + 0.5) * ART - knobSize / 2), size: knobSize };
+  const slot = { left: WHEELS_FROM * ART, top: 4 * ART, width: windowArt * ART, height: (H - 8) * ART };
+  const right = facing === "right";
   return {
-    rows,
-    width: W * ART,
+    rows: right ? rows.map((r) => [...r].reverse().join("")) : rows,
+    width,
     height: H * ART,
-    knob: { left: Math.round((KNOB.x + 0.5) * ART - knobSize / 2), top: Math.round((KNOB.y + 0.5) * ART - knobSize / 2), size: knobSize },
-    window: { left: WHEELS_FROM * ART, top: 4 * ART, width: windowArt * ART, height: (H - 8) * ART },
+    knob: right ? { ...knob, left: width - knob.left - knob.size } : knob,
+    window: right ? { ...slot, left: width - slot.left - slot.width } : slot,
     strapTop: (H * ART) / 2,
   };
 }
