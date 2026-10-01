@@ -39,6 +39,7 @@ import { SkyBadge, TideBadge } from "./Badges";
 import { formatRange } from "./CalendarView";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
+import { DrawSection, SkyCard } from "./SkyAndDraw";
 import { SymptomsSection } from "./SymptomsSection";
 
 type Props = {
@@ -73,6 +74,8 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
         <SkyBadge date={date} />
       </div>
 
+      <SkyCard date={date} hemisphere={g.settings.hemisphere} />
+
       {future ? (
         <p className="pixel-frame p-4 text-center font-journal text-xl text-silver-300">
           This day hasn&apos;t come yet.{tide ? " Its tide is only a prediction." : ""}
@@ -85,6 +88,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
         </p>
       ) : (
         <>
+          <DrawSection date={date} today={today} day={day} />
           {g.settings.cycleTracking && <TideSection g={g} date={date} today={today} day={day} />}
           <ElementsSection date={date} day={day} />
           <SymptomsSection g={g} date={date} day={day} />

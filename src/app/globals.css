@@ -429,3 +429,12 @@ svg[shape-rendering="crispEdges"],
     break-inside: avoid;
   }
 }
+
+/* The daily draw turns over like a card being revealed. */
+@keyframes card-reveal {
+  from { transform: perspective(800px) rotateY(90deg); }
+  to { transform: perspective(800px) rotateY(0deg); }
+}
+.card-reveal {
+  animation: card-reveal 480ms steps(8, end);
+}

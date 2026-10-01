@@ -1,5 +1,6 @@
 import { isSealed, type SealedGrimoire } from "./crypto";
 import { isDateKey } from "./dates";
+import { isValidDraw } from "./divination";
 import { ASPECTS, ELEMENTS, TIME_BLOCKS, type ElementLog } from "./elements";
 import { LIQUID_COLORS, VESSELS } from "./potions";
 import { BUILT_IN_SYMPTOMS } from "./symptoms";
@@ -139,6 +140,7 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
   const seen = new Set<string>();
   day.symptoms = keep(d.symptoms, sanitizeSymptomLog(knownSymptoms)).filter((s) => !seen.has(s.id) && seen.add(s.id));
   if (oneOf(d.flow, FLOWS.map((f) => f.id))) day.flow = d.flow;
+  if (isValidDraw(d.draw)) day.draw = { deck: d.draw.deck, card: d.draw.card, reversed: d.draw.reversed };
   return day;
 }
 

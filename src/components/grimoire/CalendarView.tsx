@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePageTurn } from "@/components/pixel/usePageTurn";
-import { BloodDropGlyph } from "@/components/sprites/Glyphs";
+import { BloodDropGlyph, StarGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL, nextTideWindow, tideDay, type Phase, type TideDay } from "@/lib/cycle";
 import { addMonths, dateKey, formatMonth, formatShort, monthGrid, parseKey, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { loggedElements } from "@/lib/grimoire";
 import { allDosesOn, doseLog } from "@/lib/potions";
+import { skyDay, type SkyDay } from "@/lib/wheel";
 import type { DayEntry, Grimoire } from "@/lib/types";
 import { SkyBadge, TideBadge } from "./Badges";
 import { TodayCard } from "./TodayCard";
@@ -45,6 +46,21 @@ export function formatRange(from: DateKey, to: DateKey): string {
   const a = parseKey(from);
   const b = parseKey(to);
   return a.getMonth() === b.getMonth() ? `${formatShort(a)}–${b.getDate()}` : `${formatShort(a)}–${formatShort(b)}`;
+}
+
+/** Tiny marks for a full or new moon and a sabbat on a calendar day. */
+function SkyMarks({ sky }: { sky: SkyDay }) {
+  return (
+    <>
+      {sky.moon && (
+        <span
+          aria-hidden
+          className={`inline-block size-2 shrink-0 rounded-full ${sky.moon.kind === "full" ? "bg-silver-100" : "border border-silver-300 bg-midnight-950"}`}
+        />
+      )}
+      {sky.sabbat && <StarGlyph size={10} />}
+    </>
+  );
 }
 
 export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: DateKey; onOpenDay: (d: DateKey) => void }) {
@@ -110,19 +126,23 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                 const status = future ? "none" : potionStatus(g, key, entry);
                 const bled = tide?.bleeding || Boolean(entry?.flow);
                 const possible = possibleTide(key);
+                const sky = skyDay(key, g.settings.hemisphere);
                 return (
                   <button
                     key={i}
                     type="button"
                     onClick={() => onOpenDay(key)}
-                    aria-label={`${d.toDateString()}${tide ? `, ${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}` : ""}${possible ? ", tide possible" : ""}`}
+                    aria-label={`${d.toDateString()}${tide ? `, ${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}` : ""}${possible ? ", tide possible" : ""}${sky.sabbat ? `, ${sky.sabbat.name}` : ""}${sky.moon ? `, ${sky.moon.kind === "full" ? sky.moon.name : "New Moon"}` : ""}`}
                     aria-current={key === today ? "date" : undefined}
                     className={`flex aspect-square flex-col bg-midnight-950 p-1 text-left hover:bg-midnight-700 ${
                       key === today ? "outline-2 outline-gold-300" : ""
                     } ${future ? "text-silver-500" : "text-silver-100"}`}
                   >
                     <span className="flex items-start justify-between font-journal text-base leading-none">
-                      {d.getDate()}
+                      <span className="flex items-center gap-0.5">
+                        {d.getDate()}
+                        <SkyMarks sky={sky} />
+                      </span>
                       {bled ? (
                         <BloodDropGlyph size={7} />
                       ) : (
@@ -148,6 +168,15 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
           </div>
 
           <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-journal text-base text-silver-300">
+            <li className="flex items-center gap-1">
+              <SkyMarks sky={{ moon: { kind: "full", time: "", name: "" } }} /> Full moon
+            </li>
+            <li className="flex items-center gap-1">
+              <SkyMarks sky={{ moon: { kind: "new", time: "", name: "" } }} /> New moon
+            </li>
+            <li className="flex items-center gap-1">
+              <StarGlyph size={8} /> Sabbat
+            </li>
             {tracking &&
               (["dark", "waxing", "full", "waning"] as const).map((p) => (
                 <li key={p} className="flex items-center gap-1">

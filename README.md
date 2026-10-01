@@ -78,6 +78,15 @@ A three-page setup when you first open the app:
 2. **Your rhythm:** typical cycle and period length. If you're not sure, the app uses 28 and 5 days.
 3. **Stock your cabinet:** add your first potions. You can skip this step.
 
+### 🌕 The Wheel of the Year
+The calendar marks the eight sabbats (Samhain, Yule, Imbolc, Ostara, Beltane, Litha, Lughnasadh, Mabon) and every new and full moon, with traditional names like the Harvest and Hunter's Moons and Blue Moons. Moon phases and solstices are computed precisely on your device (Meeus's astronomical algorithms). Choose northern or southern hemisphere in Settings. Each day you can draw a card from the tarot's Major Arcana or cast an Elder Futhark rune; the draw is kept with the day.
+
+### 🎨 Themes
+Midnight, Parchment (light), Enchanted Forest, and Rose Quartz, or let the Grimoire match your device or follow the seasons. A clasp charm under the ribbons closes the book back onto its cover.
+
+### 📄 Doctor-Visit Summary
+A plain, printable report of periods, cycle lengths, symptoms, and medication adherence over 3, 6, or 12 months. Save it as a PDF from the print dialog. Your journal is never included.
+
 ### 💾 Export / Import Grimoire
 Back up everything to a `.json` file and restore it on any device. Import checks the file and asks before overwriting anything. On a new device, choose **Restore from a backup** on the welcome page to skip setup. Settings shows when you last backed up.
 
@@ -182,6 +191,14 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] The Book & Quill and the Potion & Elixir Cabinet
 - [x] Settings, tide history editing, Export / Import, PWA install, and offline support
 - [x] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
+
+**Phase 3**
+- [x] Several doses a day and weekday schedules for potions
+- [x] Tide predictions as a range, sized by how regular your cycles are
+- [x] Doctor-visit summary (printable / PDF)
+- [x] Journal search and #tags
+- [x] Wheel of the Year, named moons, and the daily tarot / rune draw
+- [x] Themes, plus closing the book back onto its cover
 
 **Phase 2**
 - [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock

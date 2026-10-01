@@ -7,5 +7,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.ts"],
+    // Calendar days depend on the time zone; pin one so tests agree on every machine (and CI, which runs on UTC).
+    env: { TZ: "America/New_York" },
   },
 });

@@ -1,5 +1,6 @@
 import { MAX_TIDE_DAYS, cycleStats, sortTides } from "./cycle";
 import { addDaysKey, diffKeys, type DateKey } from "./dates";
+import type { Draw } from "./divination";
 import type { Element, ElementLog, TimeBlock } from "./elements";
 import {
   emptyDay,
@@ -48,6 +49,13 @@ export function loggedElements(day?: DayEntry): Element[] {
 
 export const setJournal = (g: Grimoire, date: DateKey, journal: string) =>
   updateDay(g, date, (d) => ({ ...d, journal }));
+
+/** Keep the day's drawn card or rune, or return it to the deck (undefined). */
+export const setDraw = (g: Grimoire, date: DateKey, draw: Draw | undefined) =>
+  updateDay(g, date, (d) => {
+    const { draw: _old, ...rest } = d; // eslint-disable-line @typescript-eslint/no-unused-vars
+    return draw ? { ...rest, draw } : rest;
+  });
 
 // ── Symptoms ─────────────────────────────────────────────────
 

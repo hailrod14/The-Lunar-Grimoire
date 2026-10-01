@@ -1,4 +1,5 @@
 import type { DateKey } from "./dates";
+import type { Draw } from "./divination";
 import type { ElementLog, TimeBlock } from "./elements";
 import type { LiquidColor, Vessel } from "./potions";
 import type { Hemisphere, ThemeSetting } from "./theme";
@@ -90,6 +91,8 @@ export type DayEntry = {
   journal: string;
   potionLogs: PotionLog[];
   symptoms: SymptomLog[];
+  /** The day's tarot card or rune, if one was drawn. */
+  draw?: Draw;
 };
 
 export type Grimoire = {

@@ -1,13 +1,10 @@
-/** The real moon in the sky, computed offline. Accurate to within about a day. */
+import { moonPhaseAt } from "./astronomy";
 
-const SYNODIC_MONTH = 29.530588853;
-const KNOWN_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14); // 2000-01-06 18:14 UTC
+/** The real moon in the sky, computed offline from precise new and full moon times. */
 
 /** 0 = new, 0.25 = first quarter, 0.5 = full, 0.75 = last quarter. Uses local noon. */
 export function skyMoonPhase(date: Date): number {
-  const noon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12).getTime();
-  const days = (noon - KNOWN_NEW_MOON) / 86_400_000;
-  return (((days / SYNODIC_MONTH) % 1) + 1) % 1;
+  return moonPhaseAt(new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12));
 }
 
 const NAMES = [
