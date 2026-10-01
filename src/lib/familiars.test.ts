@@ -14,7 +14,8 @@ describe("familiar sprites", () => {
       for (const row of rows) expect(row.length, `${s}: "${row}"`).toBe(16);
       const palette = familiarPalette(s, 0);
       for (const ch of new Set(rows.join(""))) if (ch !== ".") expect(palette[ch], `${s} uses "${ch}"`).toBeDefined();
-      expect(coats.length).toBeGreaterThanOrEqual(3);
+      expect(coats.length).toBeGreaterThanOrEqual(6);
+      expect(new Set(coats.map((c) => c.name)).size).toBe(coats.length);
     }
   });
 
