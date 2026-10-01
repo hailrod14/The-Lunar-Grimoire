@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { STORAGE_KEY, exportGrimoire, loadGrimoire, parseGrimoireFile, saveGrimoire, sanitizeGrimoire } from "./storage";
-import { newGrimoire, type Grimoire } from "./types";
+import { SCHEMA_VERSION, newGrimoire, type Grimoire } from "./types";
 
 class MemoryStorage {
   data = new Map<string, string>();
@@ -172,7 +172,7 @@ describe("export and import", () => {
     const result = sanitizeGrimoire(v1);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.grimoire.version).toBe(3);
+    expect(result.grimoire.version).toBe(SCHEMA_VERSION);
     expect(result.grimoire.potions[0]).toMatchObject({ times: ["09:00"], days: [], schedule: "daily" });
     expect(result.grimoire.customSymptoms).toEqual([]);
     expect(result.grimoire.potions[0].reminder).toBe(false);

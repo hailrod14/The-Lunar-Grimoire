@@ -1,11 +1,12 @@
 import type { DateKey } from "./dates";
 import type { Draw } from "./divination";
 import type { ElementLog, TimeBlock } from "./elements";
+import type { HolidayRegion } from "./holidays";
 import type { LiquidColor, Vessel } from "./potions";
 import type { Hemisphere, ThemeSetting } from "./theme";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export type Flow = "spotting" | "light" | "medium" | "heavy" | "clots";
 
@@ -38,6 +39,8 @@ export type Settings = {
   hemisphere: Hemisphere;
   /** When the Grimoire was last exported, as an ISO timestamp ("" = never). */
   lastBackupAt: string;
+  /** Whose public holidays and observances show on the calendar. */
+  holidayRegion: HolidayRegion;
 };
 
 /** One period. `end` is missing while the tide is still flowing. */
@@ -85,6 +88,19 @@ export type SymptomLog = { id: string; severity: SymptomSeverity };
 /** A symptom someone added for themselves. Retired ones stay in history. */
 export type CustomSymptom = { id: string; name: string; archived: boolean };
 
+/** A personal day to remember: a birthday, anniversary, and so on. */
+export type Occasion = {
+  id: string;
+  name: string;
+  kind: "birthday" | "anniversary" | "celebration" | "remembrance";
+  /** 1–12 */
+  month: number;
+  day: number;
+  /** For a yearly occasion, the year it began (to count ages); for a one-time one, the year it happens. */
+  year?: number;
+  yearly: boolean;
+};
+
 export type DayEntry = {
   flow?: Flow;
   elements: Record<TimeBlock, ElementLog[]>;
@@ -101,6 +117,7 @@ export type Grimoire = {
   tides: Tide[];
   potions: Potion[];
   customSymptoms: CustomSymptom[];
+  occasions: Occasion[];
   days: Record<DateKey, DayEntry>;
 };
 
@@ -117,6 +134,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "midnight",
   hemisphere: "north",
   lastBackupAt: "",
+  holidayRegion: "us",
 };
 
 export const emptyDay = (): DayEntry => ({
@@ -132,5 +150,6 @@ export const newGrimoire = (): Grimoire => ({
   tides: [],
   potions: [],
   customSymptoms: [],
+  occasions: [],
   days: {},
 });

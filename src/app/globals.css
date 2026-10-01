@@ -53,9 +53,11 @@
   --color-tide-waning: #8a5bc4;
   --color-blood: #b8324a;
 
-  /* Type */
-  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
-  --font-journal: var(--font-vt323), ui-monospace, monospace;
+  /* Type. By default, titles are pixel lettering and everything you read is
+     Atkinson Hyperlegible; the "lettering" setting can change either. */
+  --font-display: var(--font-pixelify), ui-monospace, monospace;
+  --font-pixel: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-journal: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
 
   /* Stepped, pixel-style animation */
   --animate-twinkle: twinkle 3s steps(3, end) infinite;
@@ -93,6 +95,23 @@
   --heat-5: #ffd866;
   --heat-ink-dim: var(--color-silver-100);
   --heat-ink-bright: #0a0924;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reading comfort — set per device in Settings, applied before first paint
+   ───────────────────────────────────────────────────────────── */
+:root[data-lettering="easy"] {
+  --font-display: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+}
+:root[data-lettering="pixel"] {
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+  --font-journal: var(--font-vt323), ui-monospace, monospace;
+}
+:root[data-text-size="large"] {
+  font-size: 112.5%;
+}
+:root[data-text-size="larger"] {
+  font-size: 125%;
 }
 
 /* The cover keeps its gilt and leather look in every theme. */
@@ -151,7 +170,7 @@
 
 /* On light paper, titles get a soft pressed shadow instead of the night-sky glow. */
 :root[data-theme="parchment"] .pixel-title {
-  text-shadow: 0 2px 0 rgb(107 71 14 / 0.18);
+  text-shadow: 0 1px 0 rgb(107 71 14 / 0.2);
 }
 
 /* Enchanted Forest: moss, pine, and honey */
@@ -225,13 +244,22 @@ body {
   background-attachment: fixed;
   color: var(--color-silver-100);
   font-family: var(--font-pixel);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-lettering="pixel"] body {
+  -webkit-font-smoothing: none;
 }
 
 svg[shape-rendering="crispEdges"],
 .pixelated {
   image-rendering: pixelated;
+}
+
+/* Pixel sprites never squash to make room for text beside them. */
+svg[shape-rendering="crispEdges"] {
+  flex-shrink: 0;
 }
 
 :focus-visible {
@@ -336,13 +364,13 @@ svg[shape-rendering="crispEdges"],
     --btn-text: var(--color-silver-100);
   }
 
-  /* Gold title with a hard pixel drop-shadow */
+  /* Gold title with a slim pixel drop-shadow: depth without blurring the letters */
   .pixel-title {
     color: var(--color-gold-300);
-    text-shadow:
-      0 var(--px) 0 var(--color-gold-900),
-      0 calc(var(--px) * 2) 0 rgb(0 0 0 / 0.5);
-    letter-spacing: 0.02em;
+    font-family: var(--font-display);
+    text-shadow: 0 2px 0 var(--color-gold-900);
+    letter-spacing: 0.05em;
+    word-spacing: 0.2em;
   }
 }
 

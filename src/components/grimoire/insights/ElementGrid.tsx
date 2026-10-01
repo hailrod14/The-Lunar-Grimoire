@@ -43,7 +43,7 @@ export function ElementGrid({ rows }: { rows: Insights["elements"]["rows"] }) {
 
   return (
     <div ref={container} className="relative">
-      <table className="w-full border-separate border-spacing-0.5">
+      <table className="w-full border-separate border-spacing-1">
         <caption className="sr-only">Share of each tide phase&apos;s element logs that went to each element</caption>
         <thead>
           <tr>
@@ -52,7 +52,7 @@ export function ElementGrid({ rows }: { rows: Insights["elements"]["rows"] }) {
               <th key={e} scope="col" className="pb-1 font-normal">
                 <span className="flex flex-col items-center gap-0.5">
                   <ElementSprite element={e} size={18} />
-                  <span className="text-[10px] text-silver-300">{ELEMENT_INFO[e].name}</span>
+                  <span className="text-xs text-silver-300">{ELEMENT_INFO[e].name}</span>
                 </span>
               </th>
             ))}
@@ -62,7 +62,7 @@ export function ElementGrid({ rows }: { rows: Insights["elements"]["rows"] }) {
           {rows.map((row) => (
             <tr key={row.phase}>
               <th scope="row" className="pr-1 text-left font-normal">
-                <span className="block text-[11px] leading-tight text-silver-100">{PHASE_LABEL[row.phase]}</span>
+                <span className="block text-xs leading-tight text-silver-100">{PHASE_LABEL[row.phase]}</span>
                 <span className={`mt-0.5 block h-1 w-6 ${PHASE_BG[row.phase]}`} />
                 <span className="block font-journal text-sm leading-tight text-silver-500">{row.total} logs</span>
               </th>
@@ -77,7 +77,7 @@ export function ElementGrid({ rows }: { rows: Insights["elements"]["rows"] }) {
                       type="button"
                       {...bind(`${ELEMENT_INFO[cell.element].name}: ${pct(cell.share)}`, detail)}
                       aria-label={`${ELEMENT_INFO[cell.element].name} in ${PHASE_LABEL[row.phase]}: ${pct(cell.share)}, ${detail}`}
-                      className="grid h-11 w-full place-items-center font-journal text-lg hover:outline-2 hover:outline-silver-100 focus-visible:outline-offset-0"
+                      className="grid h-11 w-full place-items-center font-journal text-base tabular-nums hover:outline-2 hover:outline-silver-100 focus-visible:outline-offset-0"
                       style={{ background: RAMP[s], color: s >= 4 ? "var(--heat-ink-bright)" : "var(--heat-ink-dim)" }}
                     >
                       {cell.count ? pct(cell.share) : "·"}

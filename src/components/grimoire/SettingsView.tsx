@@ -5,6 +5,7 @@ import { cycleStats, MIN_CYCLES_TO_LEARN } from "@/lib/cycle";
 import type { DateKey } from "@/lib/dates";
 import { FileText, Play } from "lucide-react";
 import { updateSettings } from "@/lib/grimoire";
+import { LETTERINGS, TEXT_SIZES, setReading, useReading } from "@/lib/reading";
 import { playPageTurn } from "@/lib/sound";
 import { THEMES } from "@/lib/theme";
 import { isAppleMobile, isInstalled, promptInstall, useCanInstall } from "@/lib/pwa";
@@ -12,6 +13,7 @@ import { dispatch, eraseEverything } from "@/lib/store";
 import type { Grimoire } from "@/lib/types";
 import { Backups } from "./Backups";
 import { Choice, Stepper } from "./Controls";
+import { OccasionsSettings } from "./Occasions";
 import { PinSettings } from "./PinSettings";
 import { RemindersSettings } from "./RemindersSettings";
 import { Section } from "./Section";
@@ -23,6 +25,8 @@ export function SettingsView({ g, today, onOpenSummary }: { g: Grimoire; today: 
   return (
     <div className="space-y-4">
       <h2 className="pixel-title text-center text-2xl">Settings</h2>
+
+      <ReadingComfort />
 
       <Section title="Cycle tracking">
         <Choice selected={tracking} onClick={() => dispatch((x) => updateSettings(x, { cycleTracking: true }))}>
@@ -39,6 +43,7 @@ export function SettingsView({ g, today, onOpenSummary }: { g: Grimoire; today: 
       {tracking && <Rhythm g={g} />}
       {tracking && <TideHistory g={g} today={today} />}
       <RemindersSettings g={g} today={today} />
+      <OccasionsSettings g={g} today={today} />
       <Section title="Doctor-visit summary">
         <p className="font-journal text-lg text-silver-300">
           A plain, printable report of your periods, symptoms, and medications, ready to save as a PDF. Your journal is never included.
@@ -100,6 +105,34 @@ function Rhythm({ g }: { g: Grimoire }) {
         <Stepper label="Estimated cycle length" value={g.settings.defaultCycleLength} min={21} max={45} unit="days" onChange={(n) => set({ defaultCycleLength: n })} />
         <p className="text-sm text-silver-300">Estimated tide length</p>
         <Stepper label="Estimated tide length" value={g.settings.defaultPeriodLength} min={2} max={10} unit="days" onChange={(n) => set({ defaultPeriodLength: n })} />
+      </div>
+    </Section>
+  );
+}
+
+function ReadingComfort() {
+  const { lettering, textSize } = useReading();
+  return (
+    <Section title="Reading comfort">
+      <p className="font-journal text-base text-silver-300">Just for this device, so your phone and computer can differ.</p>
+      <p className="text-sm text-silver-300">Lettering</p>
+      <div className="space-y-1">
+        {LETTERINGS.map((l) => (
+          <Choice key={l.id} selected={lettering === l.id} onClick={() => setReading({ lettering: l.id })}>
+            <span className={`block ${l.id === "easy" ? "font-pixel" : l.id === "pixel" ? "[font-family:var(--font-pixelify)]" : "font-display"}`}>{l.name}</span>
+            <span className="block font-journal text-base opacity-80">{l.note}</span>
+          </Choice>
+        ))}
+      </div>
+      <p className="pt-1 text-sm text-silver-300">Text size</p>
+      <div className="grid grid-cols-3 gap-1">
+        {TEXT_SIZES.map((t, i) => (
+          <Choice key={t.id} selected={textSize === t.id} onClick={() => setReading({ textSize: t.id })}>
+            <span className="block text-center" style={{ fontSize: `${1 + i * 0.125}rem` }}>
+              {t.name}
+            </span>
+          </Choice>
+        ))}
       </div>
     </Section>
   );

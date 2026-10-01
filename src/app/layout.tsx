@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Pixelify_Sans, VT323 } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Pixelify_Sans, VT323 } from "next/font/google";
 import Script from "next/script";
 import { Starfield } from "@/components/pixel/Starfield";
 import "./globals.css";
 
 const pixelify = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixelify" });
 const vt323 = VT323({ subsets: ["latin"], weight: "400", variable: "--font-vt323" });
+/** Designed by the Braille Institute so every letter is distinct, for tired eyes and low vision. */
+const atkinson = Atkinson_Hyperlegible_Next({ subsets: ["latin"], variable: "--font-atkinson" });
 
 export const metadata: Metadata = {
   title: "The Lunar Grimoire",
@@ -23,11 +25,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${pixelify.variable} ${vt323.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${pixelify.variable} ${vt323.variable} ${atkinson.variable}`} suppressHydrationWarning>
       <body className="antialiased">
-        {/* Apply the last theme before the first paint, so it never flashes Midnight first. */}
+        {/* Apply the last theme and reading settings before the first paint, so nothing flashes. */}
         <Script id="theme" strategy="beforeInteractive">
-          {`try{var t=localStorage.getItem("lunar-grimoire:theme");if(t&&t!=="midnight")document.documentElement.dataset.theme=t}catch(e){}`}
+          {`try{var r=document.documentElement,t=localStorage.getItem("lunar-grimoire:theme"),l=localStorage.getItem("lunar-grimoire:lettering"),z=localStorage.getItem("lunar-grimoire:text-size");if(t&&t!=="midnight")r.dataset.theme=t;if(l)r.dataset.lettering=l;if(z)r.dataset.textSize=z}catch(e){}`}
         </Script>
         <Starfield />
         {children}

@@ -39,6 +39,7 @@ import { SkyBadge, TideBadge } from "./Badges";
 import { formatRange } from "./CalendarView";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
+import { DayOccasions } from "./Occasions";
 import { DrawSection, SkyCard } from "./SkyAndDraw";
 import { SymptomsSection } from "./SymptomsSection";
 
@@ -75,6 +76,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
       </div>
 
       <SkyCard date={date} hemisphere={g.settings.hemisphere} />
+      <DayOccasions g={g} date={date} mode="list" />
 
       {future ? (
         <p className="pixel-frame p-4 text-center font-journal text-xl text-silver-300">
@@ -111,6 +113,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
           </Section>
         </>
       )}
+      <DayOccasions g={g} date={date} mode="add" />
     </div>
   );
 }

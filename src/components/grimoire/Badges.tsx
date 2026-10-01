@@ -36,7 +36,7 @@ export function SkyBadge({ date }: { date: DateKey }) {
     <div className="pixel-frame pixel-frame--silver flex shrink-0 items-center gap-2 px-2 py-1" title={`Sky Moon: ${name}`}>
       <PixelMoon phase={phase} variant="sky" size={24} resolution={12} title={`Sky Moon: ${name}`} />
       <div className="leading-none">
-        <p className="text-[10px] uppercase tracking-wider text-silver-500">Sky</p>
+        <p className="text-xs uppercase tracking-wider text-silver-500">Sky</p>
         <p className="font-journal text-base leading-none text-silver-100">{name}</p>
       </div>
     </div>

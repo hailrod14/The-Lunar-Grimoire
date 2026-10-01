@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePageTurn } from "@/components/pixel/usePageTurn";
-import { BloodDropGlyph, StarGlyph } from "@/components/sprites/Glyphs";
+import { BloodDropGlyph, HolidayGlyph, OccasionGlyph, StarGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL, nextTideWindow, tideDay, type Phase, type TideDay } from "@/lib/cycle";
 import { addMonths, dateKey, formatMonth, formatShort, monthGrid, parseKey, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
+import { holidaysOn, occasionsOn } from "@/lib/holidays";
 import { loggedElements } from "@/lib/grimoire";
 import { allDosesOn, doseLog } from "@/lib/potions";
 import { skyDay, type SkyDay } from "@/lib/wheel";
@@ -48,19 +49,33 @@ export function formatRange(from: DateKey, to: DateKey): string {
   return a.getMonth() === b.getMonth() ? `${formatShort(a)}–${b.getDate()}` : `${formatShort(a)}–${formatShort(b)}`;
 }
 
-/** Tiny marks for a full or new moon and a sabbat on a calendar day. */
-function SkyMarks({ sky }: { sky: SkyDay }) {
+function MoonDot({ kind }: { kind: "new" | "full" }) {
   return (
-    <>
-      {sky.moon && (
-        <span
-          aria-hidden
-          className={`inline-block size-2 shrink-0 rounded-full ${sky.moon.kind === "full" ? "bg-silver-100" : "border border-silver-300 bg-midnight-950"}`}
-        />
-      )}
-      {sky.sabbat && <StarGlyph size={10} />}
-    </>
+    <span
+      aria-hidden
+      className={`inline-block size-2 shrink-0 rounded-full ${kind === "full" ? "bg-silver-100" : "border border-silver-300 bg-midnight-950"}`}
+    />
   );
+}
+
+/** How many marks fit in a day's right-hand column. Everything is still named on the day's page. */
+const MAX_MARKS = 3;
+
+/** The small marks for a day, most personal first: occasions, the tide, the moon, sabbats, holidays. */
+function dayMarks(g: Grimoire, key: DateKey, sky: SkyDay, bled: boolean, possible: boolean): React.ReactNode[] {
+  const marks: React.ReactNode[] = [];
+  for (const o of occasionsOn(g, key)) marks.push(<OccasionGlyph key={o.id} kind={o.kind} size={8} />);
+  if (bled) marks.push(<BloodDropGlyph key="tide" size={7} />);
+  else if (possible)
+    marks.push(
+      <span key="tide" className="opacity-40">
+        <BloodDropGlyph size={7} />
+      </span>,
+    );
+  if (sky.moon) marks.push(<MoonDot key="moon" kind={sky.moon.kind} />);
+  if (sky.sabbat) marks.push(<StarGlyph key="sabbat" size={8} />);
+  if (holidaysOn(key, g.settings.holidayRegion).length) marks.push(<HolidayGlyph key="holiday" size={8} />);
+  return marks.slice(0, MAX_MARKS);
 }
 
 export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: DateKey; onOpenDay: (d: DateKey) => void }) {
@@ -127,39 +142,41 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                 const bled = tide?.bleeding || Boolean(entry?.flow);
                 const possible = possibleTide(key);
                 const sky = skyDay(key, g.settings.hemisphere);
+                const holidays = holidaysOn(key, g.settings.holidayRegion);
+                const occasions = occasionsOn(g, key);
+                const label = [
+                  d.toDateString(),
+                  tide && `${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}`,
+                  possible && "tide possible",
+                  ...occasions.map((o) => o.name),
+                  sky.sabbat?.name,
+                  sky.moon && (sky.moon.kind === "full" ? sky.moon.name : "New Moon"),
+                  ...holidays.map((h) => h.name),
+                ]
+                  .filter(Boolean)
+                  .join(", ");
                 return (
                   <button
                     key={i}
                     type="button"
                     onClick={() => onOpenDay(key)}
-                    aria-label={`${d.toDateString()}${tide ? `, ${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}` : ""}${possible ? ", tide possible" : ""}${sky.sabbat ? `, ${sky.sabbat.name}` : ""}${sky.moon ? `, ${sky.moon.kind === "full" ? sky.moon.name : "New Moon"}` : ""}`}
+                    aria-label={label}
                     aria-current={key === today ? "date" : undefined}
-                    className={`flex aspect-square flex-col bg-midnight-950 p-1 text-left hover:bg-midnight-700 ${
+                    className={`flex aspect-[4/5] flex-col bg-midnight-950 p-1 text-left hover:bg-midnight-700 sm:aspect-square ${
                       key === today ? "outline-2 outline-gold-300" : ""
                     } ${future ? "text-silver-500" : "text-silver-100"}`}
                   >
-                    <span className="flex items-start justify-between font-journal text-base leading-none">
-                      <span className="flex items-center gap-0.5">
-                        {d.getDate()}
-                        <SkyMarks sky={sky} />
+                    <span className="flex min-h-0 flex-1 items-start justify-between gap-0.5">
+                      <span className="font-journal text-base leading-none">{d.getDate()}</span>
+                      <span aria-hidden className="flex w-2 flex-col items-center gap-[3px] pt-px">
+                        {dayMarks(g, key, sky, bled, possible)}
                       </span>
-                      {bled ? (
-                        <BloodDropGlyph size={7} />
-                      ) : (
-                        possible && (
-                          <span className="opacity-40">
-                            <BloodDropGlyph size={7} />
-                          </span>
-                        )
-                      )}
                     </span>
-                    <span className="mt-auto flex items-end justify-between">
-                      <span className="flex gap-px">
-                        {elements.map((e) => (
-                          <span key={e} className={`size-1 ${ELEMENT_INFO[e].bg}`} />
-                        ))}
-                      </span>
-                      {status !== "none" && <span className={`size-1.5 ${status === "all" ? "bg-gold-300" : "bg-gold-900"}`} />}
+                    <span className="flex items-end gap-px">
+                      {status !== "none" && <span className={`mr-0.5 size-1.5 ${status === "all" ? "bg-gold-300" : "bg-gold-900"}`} />}
+                      {elements.map((e) => (
+                        <span key={e} className={`size-1 ${ELEMENT_INFO[e].bg}`} />
+                      ))}
                     </span>
                     <span className={`mt-0.5 h-1 w-full ${tide ? PHASE_BG[tide.phase] : ""} ${tide?.predicted ? "opacity-35" : ""}`} />
                   </button>
@@ -169,14 +186,24 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
 
           <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-journal text-base text-silver-300">
             <li className="flex items-center gap-1">
-              <SkyMarks sky={{ moon: { kind: "full", time: "", name: "" } }} /> Full moon
+              <MoonDot kind="full" /> Full moon
             </li>
             <li className="flex items-center gap-1">
-              <SkyMarks sky={{ moon: { kind: "new", time: "", name: "" } }} /> New moon
+              <MoonDot kind="new" /> New moon
             </li>
             <li className="flex items-center gap-1">
               <StarGlyph size={8} /> Sabbat
             </li>
+            {g.settings.holidayRegion !== "none" && (
+              <li className="flex items-center gap-1">
+                <HolidayGlyph size={8} /> Holiday
+              </li>
+            )}
+            {g.occasions.length > 0 && (
+              <li className="flex items-center gap-1">
+                <OccasionGlyph kind="birthday" size={8} /> Your occasions
+              </li>
+            )}
             {tracking &&
               (["dark", "waxing", "full", "waning"] as const).map((p) => (
                 <li key={p} className="flex items-center gap-1">

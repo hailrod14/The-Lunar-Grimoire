@@ -2,6 +2,7 @@ import { isSealed, type SealedGrimoire } from "./crypto";
 import { isDateKey } from "./dates";
 import { isValidDraw } from "./divination";
 import { ASPECTS, ELEMENTS, TIME_BLOCKS, type ElementLog } from "./elements";
+import { HOLIDAY_REGIONS, OCCASION_KINDS } from "./holidays";
 import { LIQUID_COLORS, VESSELS } from "./potions";
 import { BUILT_IN_SYMPTOMS } from "./symptoms";
 import { THEMES } from "./theme";
@@ -14,6 +15,7 @@ import {
   type CustomSymptom,
   type DayEntry,
   type Grimoire,
+  type Occasion,
   type Potion,
   type PotionLog,
   type Settings,
@@ -56,6 +58,7 @@ function sanitizeSettings(v: unknown): Settings {
     theme: oneOf(s.theme, THEMES.map((t) => t.id)) ? s.theme : DEFAULT_SETTINGS.theme,
     hemisphere: s.hemisphere === "south" ? "south" : "north",
     lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
+    holidayRegion: oneOf(s.holidayRegion, HOLIDAY_REGIONS.map((r) => r.id)) ? s.holidayRegion : DEFAULT_SETTINGS.holidayRegion,
   };
 }
 
@@ -122,6 +125,26 @@ function sanitizeCustomSymptom(v: unknown): CustomSymptom | null {
   return { id: v.id, name: v.name.trim(), archived: v.archived === true };
 }
 
+function sanitizeOccasion(v: unknown): Occasion | null {
+  if (!isObj(v) || typeof v.name !== "string" || !v.name.trim()) return null;
+  const month = numberIn(v.month, 1, 12, 0);
+  const daysInMonth = new Date(2024, month, 0).getDate(); // a leap year, so Feb 29 is allowed
+  const day = numberIn(v.day, 1, daysInMonth, 0);
+  if (!month || !day) return null;
+  const yearly = v.yearly !== false;
+  const year = numberIn(v.year, 1900, 2200, 0);
+  if (!yearly && !year) return null;
+  return {
+    id: str(v.id) || crypto.randomUUID(),
+    name: v.name.trim().slice(0, 80),
+    kind: oneOf(v.kind, OCCASION_KINDS.map((k) => k.id)) ? v.kind : "celebration",
+    month,
+    day,
+    ...(year ? { year } : {}),
+    yearly,
+  };
+}
+
 function sanitizeSymptomLog(known: Set<string>) {
   return (v: unknown): SymptomLog | null => {
     if (!isObj(v) || typeof v.id !== "string" || !known.has(v.id)) return null;
@@ -147,7 +170,8 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
 /**
  * Older saves are upgraded one version at a time. Add a step here when SCHEMA_VERSION increases.
  * v1 → v2 added symptoms, custom symptoms, and potion reminders; v2 → v3 replaced a potion's
- * single `time` with a list of dose `times` plus weekdays. Sanitizing fills in and converts
+ * single `time` with a list of dose `times` plus weekdays; v3 → v4 added occasions and the
+ * holiday region. Sanitizing fills in and converts
  * all of these, so no data needs rewriting here.
  */
 function migrate(raw: Obj): Obj {
@@ -186,6 +210,7 @@ export function sanitizeGrimoire(raw: unknown): ParseResult {
       tides: keep(data.tides, sanitizeTide).sort((a, b) => (a.start < b.start ? -1 : 1)),
       potions: keep(data.potions, sanitizePotion),
       customSymptoms,
+      occasions: keep(data.occasions, sanitizeOccasion),
       days,
     },
   };

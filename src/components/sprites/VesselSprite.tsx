@@ -4,7 +4,7 @@ import { LIQUID_COLORS, type LiquidColor, type Vessel } from "@/lib/potions";
 
 export { LIQUID_COLORS, VESSELS, VESSEL_NAMES, type LiquidColor, type Vessel } from "@/lib/potions";
 
-// Shared keys: o outline · g glass · w shine · c/C cork · l liquid · L liquid shadow · B liquid light
+// Shared keys: o outline · g glass · w shine · c/C cork · e/f pill shell · l liquid · L liquid shadow · B liquid light
 const ROWS: Record<Vessel, string[]> = {
   flask: [
     "....cccc....",
@@ -45,6 +45,48 @@ const ROWS: Record<Vessel, string[]> = {
     "..owlllllo..",
     "..olllllLo..",
     "..olllllLo..",
+    "..oLLLLLLo..",
+    "..oooooooo..",
+  ],
+  capsule: [
+    "........ooo.",
+    ".......oBllo",
+    "......oBlllo",
+    ".....oBlllLo",
+    "....oBlllLo.",
+    "...oweelLo..",
+    "..oweeefo...",
+    ".oweeefo....",
+    ".oweefo.....",
+    ".oeefo......",
+    "..ooo.......",
+    "............",
+  ],
+  tablet: [
+    "............",
+    "....oooo....",
+    "..ooBlllloo.",
+    ".oBBlllllLo.",
+    ".oBllllllLo.",
+    "oLLLLLLLLLLo",
+    "oBlllllllLLo",
+    ".olllllllLo.",
+    ".oLllllllLo.",
+    "..ooLLLLoo..",
+    "....oooo....",
+    "............",
+  ],
+  bottle: [
+    "..oooooooo..",
+    "..oeeeeeeo..",
+    "..offffffo..",
+    "..oooooooo..",
+    "..oBllllLo..",
+    "..oBttttLo..",
+    "..oBtsstLo..",
+    "..oBttttLo..",
+    "..oBllllLo..",
+    "..oBllllLo..",
     "..oLLLLLLo..",
     "..oooooooo..",
   ],
@@ -113,6 +155,8 @@ export function VesselSprite({ vessel, color, size = 32, dim = false, title }: V
     h: "#6d6590",
     s: "#6b4a2a",
     t: "#e6cfa0",
+    e: "#ece8f4",
+    f: "#b6aecb",
     l: dim ? shade(liquid, -0.55) : liquid,
     L: dim ? shade(liquid, -0.7) : shade(liquid, -0.3),
     B: dim ? shade(liquid, -0.4) : shade(liquid, 0.45),

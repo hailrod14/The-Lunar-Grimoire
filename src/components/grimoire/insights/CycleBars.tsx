@@ -9,7 +9,7 @@ const HEIGHT = 120;
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-midnight-950 px-2 py-1">
-      <p className="text-[10px] tracking-wider text-silver-500 uppercase">{label}</p>
+      <p className="text-xs tracking-wider text-silver-500 uppercase">{label}</p>
       <p className="font-journal text-2xl leading-tight text-gold-300">{value}</p>
     </div>
   );

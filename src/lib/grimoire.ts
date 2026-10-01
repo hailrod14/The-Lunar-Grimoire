@@ -7,6 +7,7 @@ import {
   type DayEntry,
   type Flow,
   type Grimoire,
+  type Occasion,
   type Potion,
   type Settings,
   type SymptomSeverity,
@@ -235,6 +236,18 @@ export const archivePotion = (g: Grimoire, id: string, archived = true): Grimoir
 });
 
 export const activePotions = (g: Grimoire) => g.potions.filter((p) => !p.archived);
+
+// ── Occasions ────────────────────────────────────────────────
+
+/** Add a new occasion (no id yet) or save changes to an existing one. */
+export function saveOccasion(g: Grimoire, occasion: Omit<Occasion, "id"> & { id?: string }): Grimoire {
+  if (occasion.id && g.occasions.some((o) => o.id === occasion.id)) {
+    return { ...g, occasions: g.occasions.map((o) => (o.id === occasion.id ? (occasion as Occasion) : o)) };
+  }
+  return { ...g, occasions: [...g.occasions, { ...occasion, id: newId() }] };
+}
+
+export const deleteOccasion = (g: Grimoire, id: string): Grimoire => ({ ...g, occasions: g.occasions.filter((o) => o.id !== id) });
 
 // ── Settings & onboarding ────────────────────────────────────
 

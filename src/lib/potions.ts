@@ -1,13 +1,16 @@
 import { formatHHMM, parseKey, type DateKey } from "./dates";
 import type { DayEntry, Grimoire, Potion, PotionLog } from "./types";
 
-export const VESSELS = ["flask", "vial", "dropper", "herbs", "crystal", "cauldron"] as const;
+export const VESSELS = ["flask", "vial", "dropper", "capsule", "tablet", "bottle", "herbs", "crystal", "cauldron"] as const;
 export type Vessel = (typeof VESSELS)[number];
 
 export const VESSEL_NAMES: Record<Vessel, string> = {
   flask: "Round Flask",
   vial: "Tall Vial",
   dropper: "Tincture Dropper",
+  capsule: "Capsule",
+  tablet: "Tablet",
+  bottle: "Pill Bottle",
   herbs: "Herb Bundle",
   crystal: "Crystal",
   cauldron: "Tiny Cauldron",
