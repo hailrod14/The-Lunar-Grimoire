@@ -3,11 +3,9 @@ import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { StarGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL, type TideDay } from "@/lib/cycle";
 import { formatLong, parseKey, type DateKey } from "@/lib/dates";
-import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
 import type { Mood } from "@/lib/familiars";
-import { TODAY_SPOT } from "@/lib/stickers";
 import type { Familiar } from "@/lib/types";
-import { CoverStickers, LiveSticker } from "./Stickers";
+import { CoverStickers } from "./Stickers";
 
 /** Tooled-gold corner filigree; mirrored for the other three corners. */
 const CORNER = [
@@ -132,19 +130,8 @@ export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) 
         </span>
       </span>
 
-      {familiar && (
-        <span
-          aria-hidden
-          className="absolute -translate-x-1/2 -translate-y-1/2 -rotate-6"
-          style={{ left: `${TODAY_SPOT[0]}%`, top: `${TODAY_SPOT[1]}%` }}
-        >
-          <LiveSticker>
-            <FamiliarSprite familiar={familiar} mood={mood} size={80} />
-          </LiveSticker>
-        </span>
-      )}
     </button>
-    {familiar && <CoverStickers stickers={(familiar.stickers ?? []).filter((s) => s.onCover)} />}
+    {familiar && <CoverStickers stickers={(familiar.stickers ?? []).filter((s) => s.onCover)} familiar={familiar} mood={mood} />}
     </div>
   );
 }

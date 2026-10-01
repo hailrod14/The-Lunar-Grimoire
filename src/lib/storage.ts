@@ -191,6 +191,9 @@ function sanitizeFamiliar(v: unknown): Familiar | undefined {
     collected: [...new Set(collected.filter((id): id is string => typeof id === "string" && ACCESSORIES.some((a) => a.id === id)))],
     adoptedOn: isDateKey(v.adoptedOn) ? v.adoptedOn : "2026-01-01",
     stickers: keep(v.stickers, sanitizeSticker),
+    ...(isObj(v.coverSpot) && typeof v.coverSpot.x === "number" && typeof v.coverSpot.y === "number"
+      ? { coverSpot: { x: Math.min(100, Math.max(0, Math.round(v.coverSpot.x))), y: Math.min(100, Math.max(0, Math.round(v.coverSpot.y))) } }
+      : {}),
     cameos: v.cameos !== false,
   };
 }

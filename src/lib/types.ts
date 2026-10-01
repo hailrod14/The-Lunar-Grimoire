@@ -138,6 +138,8 @@ export type Familiar = {
   adoptedOn: DateKey;
   /** Earned cover stickers. */
   stickers?: Sticker[];
+  /** Where today's sticker sits on the cover, in percent (default: bottom left). */
+  coverSpot?: { x: number; y: number };
   /** Little visits on the day, journal, and cabinet pages. */
   cameos: boolean;
 };

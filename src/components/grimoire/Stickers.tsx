@@ -4,9 +4,11 @@ import { useRef, useState } from "react";
 import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
 import { BloodDropGlyph, SparkleGlyph, StarGlyph } from "@/components/sprites/Glyphs";
 import { formatShort, parseKey } from "@/lib/dates";
-import { moveSticker } from "@/lib/stickers";
+import type { Mood } from "@/lib/familiars";
+import { updateFamiliar } from "@/lib/grimoire";
+import { TODAY_SPOT, moveSticker } from "@/lib/stickers";
 import { dispatch } from "@/lib/store";
-import type { Sticker } from "@/lib/types";
+import type { Familiar, Sticker } from "@/lib/types";
 
 /** A white die-cut edge that follows the sprite's own pixels, plus a soft drop shadow. */
 const DIE_CUT =
@@ -40,14 +42,44 @@ export function LiveSticker({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Something on the cover that can be dragged: an earned sticker, or today's familiar. */
+type Item = { id: string; x: number; y: number; rot: number; title: string; art: React.ReactNode; onDrop: (x: number, y: number) => void };
+
 /**
- * The stickers on the cover. Drag one to move it (it stays where you drop
- * it, on every device); tap one to see what it was for.
+ * The stickers on the cover, today's familiar among them. Drag one to move
+ * it (it stays where you drop it, on every device); tap one to see what it's for.
+ * They sit above the cover rather than inside it, so touching one never opens the book.
  */
-export function CoverStickers({ stickers }: { stickers: Sticker[] }) {
+export function CoverStickers({ stickers, familiar, mood }: { stickers: Sticker[]; familiar: Familiar; mood: Mood }) {
   const layer = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; moved: boolean } | null>(null);
   const [shown, setShown] = useState<string | null>(null);
+
+  const spot = familiar.coverSpot ?? { x: TODAY_SPOT[0], y: TODAY_SPOT[1] };
+  const items: Item[] = [
+    ...stickers.map((s) => ({
+      id: s.id,
+      x: s.x,
+      y: s.y,
+      rot: s.rot,
+      title: stickerTitle(s),
+      art: <StickerArt sticker={s} size={56} />,
+      onDrop: (x: number, y: number) => dispatch((g) => moveSticker(g, s.id, x, y)),
+    })),
+    {
+      id: "today",
+      x: spot.x,
+      y: spot.y,
+      rot: -6,
+      title: `${familiar.name}, today`,
+      art: (
+        <LiveSticker>
+          <FamiliarSprite familiar={familiar} mood={mood} size={80} />
+        </LiveSticker>
+      ),
+      onDrop: (x: number, y: number) => dispatch((g) => updateFamiliar(g, { coverSpot: { x: Math.round(x), y: Math.round(y) } })),
+    },
+  ];
 
   const toPercent = (clientX: number, clientY: number) => {
     const r = layer.current!.getBoundingClientRect();
@@ -57,17 +89,19 @@ export function CoverStickers({ stickers }: { stickers: Sticker[] }) {
 
   return (
     <div ref={layer} className="pointer-events-none absolute inset-0">
-      {stickers.map((s) => {
+      {items.map((s) => {
         const here = drag?.id === s.id ? drag : s;
         return (
           <div
             key={s.id}
             role="img"
-            aria-label={`Sticker: ${stickerTitle(s)}`}
-            title={stickerTitle(s)}
+            aria-label={`Sticker: ${s.title}`}
+            title={s.title}
             className={`pointer-events-auto absolute cursor-grab touch-none select-none ${drag?.id === s.id ? "z-20 cursor-grabbing" : "z-10"}`}
             style={{ left: `${here.x}%`, top: `${here.y}%`, transform: `translate(-50%, -50%) rotate(${s.rot}deg) scale(${drag?.id === s.id ? 1.12 : 1})` }}
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
+              e.stopPropagation();
               try {
                 e.currentTarget.setPointerCapture(e.pointerId);
               } catch {
@@ -81,18 +115,19 @@ export function CoverStickers({ stickers }: { stickers: Sticker[] }) {
               const moved = drag.moved || Math.abs(p.x - s.x) > 2 || Math.abs(p.y - s.y) > 2;
               setDrag({ id: s.id, ...p, moved });
             }}
-            onPointerUp={() => {
+            onPointerUp={(e) => {
+              e.stopPropagation();
               if (drag?.id !== s.id) return;
-              if (drag.moved) dispatch((g) => moveSticker(g, s.id, drag.x, drag.y));
+              if (drag.moved) s.onDrop(drag.x, drag.y);
               else setShown((x) => (x === s.id ? null : s.id));
               setDrag(null);
             }}
             onPointerCancel={() => setDrag(null)}
           >
-            <StickerArt sticker={s} size={56} />
+            {s.art}
             {shown === s.id && (
               <span className="absolute top-full left-1/2 mt-1 -translate-x-1/2 bg-midnight-950 px-2 py-0.5 font-journal text-base whitespace-nowrap text-gold-300">
-                {stickerTitle(s)}
+                {s.title}
               </span>
             )}
           </div>
