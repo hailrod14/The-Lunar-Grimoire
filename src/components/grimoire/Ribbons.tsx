@@ -3,10 +3,10 @@ import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { CrystalBallGlyph } from "@/components/sprites/Glyphs";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 
-export type View = "calendar" | "day" | "journal" | "cabinet" | "insights" | "settings";
+export type View = "calendar" | "familiar" | "day" | "journal" | "cabinet" | "insights" | "settings";
 
 /** Top-to-bottom ribbon order, which decides the page-turn direction. */
-export const RIBBON_ORDER: View[] = ["calendar", "day", "journal", "cabinet", "insights", "settings"];
+export const RIBBON_ORDER: View[] = ["calendar", "familiar", "day", "journal", "cabinet", "insights", "settings"];
 
 const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[] = [
   { view: "calendar", label: "Calendar", bg: "bg-[#6b44b8]", icon: <CalendarDays size={18} strokeWidth={2.5} /> },

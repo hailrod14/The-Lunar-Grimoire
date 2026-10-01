@@ -17,6 +17,7 @@ import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
 import { CalendarView } from "./CalendarView";
 import { Cover } from "./Cover";
+import { FamiliarView } from "./FamiliarView";
 import { LockScreen } from "./LockScreen";
 import { Onboarding } from "./Onboarding";
 import { CabinetView } from "./CabinetView";
@@ -163,7 +164,8 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
 
   const page = (v: View) => (
     <>
-      {v === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} />}
+      {v === "calendar" && <CalendarView g={g} today={today} onOpenDay={(d) => open(d)} onOpenFamiliar={() => open(selected, "familiar")} />}
+      {v === "familiar" && <FamiliarView g={g} today={today} />}
       {v === "day" && (
         <DayView
           key={selected}

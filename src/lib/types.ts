@@ -1,12 +1,13 @@
 import type { DateKey } from "./dates";
 import type { Draw } from "./divination";
 import type { ElementLog, TimeBlock } from "./elements";
+import type { Species } from "./familiars";
 import type { HolidayRegion } from "./holidays";
 import type { LiquidColor, Vessel } from "./potions";
 import type { Hemisphere, ThemeSetting } from "./theme";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export type Flow = "spotting" | "light" | "medium" | "heavy" | "clots";
 
@@ -101,6 +102,20 @@ export type Occasion = {
   yearly: boolean;
 };
 
+/** A creature companion that follows your tide. */
+export type Familiar = {
+  species: Species;
+  name: string;
+  /** Index into the species' coats. */
+  coat: number;
+  /** Accessory ids being worn. */
+  head?: string;
+  neck?: string;
+  /** Seasonal pieces gathered so far (they stay once collected). */
+  collected: string[];
+  adoptedOn: DateKey;
+};
+
 export type DayEntry = {
   flow?: Flow;
   elements: Record<TimeBlock, ElementLog[]>;
@@ -118,6 +133,7 @@ export type Grimoire = {
   potions: Potion[];
   customSymptoms: CustomSymptom[];
   occasions: Occasion[];
+  familiar?: Familiar;
   days: Record<DateKey, DayEntry>;
 };
 

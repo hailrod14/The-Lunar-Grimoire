@@ -13,6 +13,7 @@ import { allDosesOn, doseLog } from "@/lib/potions";
 import { skyDay, type SkyDay } from "@/lib/wheel";
 import type { DayEntry, Grimoire } from "@/lib/types";
 import { SkyBadge, TideBadge } from "./Badges";
+import { FamiliarCard } from "./FamiliarView";
 import { TodayCard } from "./TodayCard";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -78,7 +79,9 @@ function dayMarks(g: Grimoire, key: DateKey, sky: SkyDay, bled: boolean, possibl
   return marks.slice(0, MAX_MARKS);
 }
 
-export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: DateKey; onOpenDay: (d: DateKey) => void }) {
+type Props = { g: Grimoire; today: DateKey; onOpenDay: (d: DateKey) => void; onOpenFamiliar: () => void };
+
+export function CalendarView({ g, today, onOpenDay, onOpenFamiliar }: Props) {
   const [month, setMonth] = useState(() => {
     const t = parseKey(today);
     return new Date(t.getFullYear(), t.getMonth(), 1);
@@ -99,6 +102,8 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
         )}
         <SkyBadge date={today} />
       </header>
+
+      <FamiliarCard g={g} today={today} onOpen={onOpenFamiliar} />
 
       <section aria-label="Calendar" className="relative">
         <div ref={pageRef}>

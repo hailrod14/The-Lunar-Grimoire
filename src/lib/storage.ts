@@ -2,6 +2,7 @@ import { isSealed, type SealedGrimoire } from "./crypto";
 import { isDateKey } from "./dates";
 import { isValidDraw } from "./divination";
 import { ASPECTS, ELEMENTS, TIME_BLOCKS, type ElementLog } from "./elements";
+import { ACCESSORIES, SPECIES, SPECIES_INFO } from "./familiars";
 import { HOLIDAY_REGIONS, OCCASION_KINDS } from "./holidays";
 import { LIQUID_COLORS, VESSELS } from "./potions";
 import { BUILT_IN_SYMPTOMS } from "./symptoms";
@@ -14,6 +15,7 @@ import {
   newGrimoire,
   type CustomSymptom,
   type DayEntry,
+  type Familiar,
   type Grimoire,
   type Occasion,
   type Potion,
@@ -145,6 +147,22 @@ function sanitizeOccasion(v: unknown): Occasion | null {
   };
 }
 
+function sanitizeFamiliar(v: unknown): Familiar | undefined {
+  if (!isObj(v) || !oneOf(v.species, SPECIES)) return undefined;
+  const wearable = (slot: "head" | "neck", id: unknown) =>
+    typeof id === "string" && ACCESSORIES.some((a) => a.id === id && a.slot === slot) ? { [slot]: id } : {};
+  const collected = Array.isArray(v.collected) ? v.collected : [];
+  return {
+    species: v.species,
+    name: str(v.name).trim().slice(0, 40) || SPECIES_INFO[v.species].name,
+    coat: numberIn(v.coat, 0, SPECIES_INFO[v.species].coats.length - 1, 0),
+    ...wearable("head", v.head),
+    ...wearable("neck", v.neck),
+    collected: [...new Set(collected.filter((id): id is string => typeof id === "string" && ACCESSORIES.some((a) => a.id === id)))],
+    adoptedOn: isDateKey(v.adoptedOn) ? v.adoptedOn : "2026-01-01",
+  };
+}
+
 function sanitizeSymptomLog(known: Set<string>) {
   return (v: unknown): SymptomLog | null => {
     if (!isObj(v) || typeof v.id !== "string" || !known.has(v.id)) return null;
@@ -171,7 +189,7 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
  * Older saves are upgraded one version at a time. Add a step here when SCHEMA_VERSION increases.
  * v1 → v2 added symptoms, custom symptoms, and potion reminders; v2 → v3 replaced a potion's
  * single `time` with a list of dose `times` plus weekdays; v3 → v4 added occasions and the
- * holiday region. Sanitizing fills in and converts
+ * holiday region; v4 → v5 added the familiar. Sanitizing fills in and converts
  * all of these, so no data needs rewriting here.
  */
 function migrate(raw: Obj): Obj {
@@ -211,6 +229,7 @@ export function sanitizeGrimoire(raw: unknown): ParseResult {
       potions: keep(data.potions, sanitizePotion),
       customSymptoms,
       occasions: keep(data.occasions, sanitizeOccasion),
+      ...(sanitizeFamiliar(data.familiar) ? { familiar: sanitizeFamiliar(data.familiar) } : {}),
       days,
     },
   };

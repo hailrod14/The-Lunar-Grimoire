@@ -81,6 +81,9 @@ A three-page setup when you first open the app:
 ### 🌕 The Wheel of the Year
 The calendar marks the eight sabbats (Samhain, Yule, Imbolc, Ostara, Beltane, Litha, Lughnasadh, Mabon) and every new and full moon, with traditional names like the Harvest and Hunter's Moons and Blue Moons. Moon phases and solstices are computed precisely on your device (Meeus's astronomical algorithms). Choose northern or southern hemisphere in Settings. Each day you can draw a card from the tarot's Major Arcana or cast an Elder Futhark rune; the draw is kept with the day.
 
+### 🐈‍⬛ Familiars
+Adopt a small companion: a cat, dog, frog, spider, fish, bat, dragon, or phoenix, in four colours each, with a name of your choosing. Your familiar follows your tide (or the sky's moon if you don't track a cycle): asleep on a cushion in the Dark Moon, curious as it waxes, glowing and hopping at the Full Moon, and tucked in with a cup of tea as it wanes. Tap to pet them. Dress them up from the wardrobe: hats, crowns, and neckwear, plus seasonal pieces (a pumpkin hat in autumn, a Yule hat in December, a flower crown in spring…) that join the wardrobe when their season arrives and stay once collected.
+
 ### 🎂 Holidays & Occasions
 Public holidays and well-loved observances for the US, Canada, the UK, or Australia, plus your own birthdays, anniversaries, celebrations, and remembrances (yearly or one-time, with ages counted if you add the year). Each shows as a small mark in the day's right-hand column on the calendar and is named on the day's page.
 
@@ -217,6 +220,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Public holidays and personal occasions on the calendar
 - [x] Capsule, tablet, and pill bottle vessels
 - [x] Optional end-to-end encrypted sync across devices (Firebase)
+- [x] Familiars that follow your tide, with a seasonal wardrobe
 
 **Phase 2**
 - [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock

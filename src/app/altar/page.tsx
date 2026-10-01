@@ -5,6 +5,8 @@ import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { ElementSprite, type Element } from "@/components/sprites/ElementSprite";
 import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, VesselSprite, type LiquidColor } from "@/components/sprites/VesselSprite";
 import { BloodDropGlyph, SparkleGlyph, StarGlyph } from "@/components/sprites/Glyphs";
+import { FamiliarSprite } from "@/components/sprites/FamiliarSprite";
+import { ACCESSORIES, SPECIES, SPECIES_INFO } from "@/lib/familiars";
 import { JournalDemo, PotionDemo } from "./Demos";
 
 export const metadata: Metadata = { title: "Design Altar · The Lunar Grimoire" };
@@ -114,6 +116,43 @@ export default function Altar() {
               <VesselSprite vessel="flask" color={c} size={24} /> {c}
             </span>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Familiars, by mood">
+        <div className="pixel-frame overflow-x-auto p-4">
+          <table className="font-journal text-lg text-silver-300">
+            <thead>
+              <tr>
+                <th />
+                {(["dark", "waxing", "full", "waning"] as const).map((m) => (
+                  <th key={m} className="px-2 font-normal">
+                    {m}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SPECIES.map((s, i) => (
+                <tr key={s}>
+                  <th className="pr-2 text-left font-normal">{SPECIES_INFO[s].name}</th>
+                  {(["dark", "waxing", "full", "waning"] as const).map((m, j) => {
+                    const heads = ACCESSORIES.filter((a) => a.slot === "head");
+                    const necks = ACCESSORIES.filter((a) => a.slot === "neck");
+                    return (
+                      <td key={m} className="p-1">
+                        <FamiliarSprite
+                          familiar={{ species: s, coat: (i + j) % 4, head: j === 0 ? undefined : heads[(i * 3 + j) % heads.length].id, neck: j === 2 ? necks[i % necks.length].id : undefined }}
+                          mood={m}
+                          size={96}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Section>
 

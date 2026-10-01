@@ -466,3 +466,34 @@ svg[shape-rendering="crispEdges"] {
 .card-reveal {
   animation: card-reveal 480ms steps(8, end);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Familiars — stepped, pixel-style moods (units are sprite pixels)
+   ───────────────────────────────────────────────────────────── */
+.fam-breathe { animation: fam-breathe 3.2s steps(1, end) infinite; }
+.fam-bob { animation: fam-bob 2.4s steps(1, end) infinite; }
+.fam-hop { animation: fam-hop 1.4s steps(1, end) infinite; }
+.fam-sway { animation: fam-sway 4s steps(1, end) infinite; }
+.fam-squish { animation: fam-squish 360ms steps(3, end); }
+.fam-float { animation: fam-float 3s steps(6, end) infinite; }
+.fam-heart { animation: fam-float 1.2s steps(6, end) forwards; }
+.fam-delay { animation-delay: 1.5s; }
+.fam-heart.fam-delay { animation-delay: 0.25s; opacity: 0; }
+.fam-glow { filter: drop-shadow(0 0 6px rgb(255 216 102 / 0.55)); }
+.fam-say { animation: fam-say 1.4s steps(7, end) forwards; }
+
+@keyframes fam-breathe { 50% { transform: scaleY(0.94); } }
+@keyframes fam-bob { 50% { transform: translateY(-1px); } }
+@keyframes fam-hop { 0%, 60%, 100% { transform: translateY(0); } 20% { transform: translateY(-2px); } 40% { transform: translateY(-1px); } }
+@keyframes fam-sway { 25% { transform: translateX(-0.5px); } 75% { transform: translateX(0.5px); } }
+@keyframes fam-squish { 50% { transform: scale(1.08, 0.88); } }
+@keyframes fam-float {
+  0% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(2px, -6px); opacity: 0; }
+}
+@keyframes fam-say {
+  0% { opacity: 0; transform: translate(-50%, 4px); }
+  15%, 75% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -4px); }
+}

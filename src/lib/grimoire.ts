@@ -6,6 +6,7 @@ import {
   emptyDay,
   type DayEntry,
   type Flow,
+  type Familiar,
   type Grimoire,
   type Occasion,
   type Potion,
@@ -248,6 +249,20 @@ export function saveOccasion(g: Grimoire, occasion: Omit<Occasion, "id"> & { id?
 }
 
 export const deleteOccasion = (g: Grimoire, id: string): Grimoire => ({ ...g, occasions: g.occasions.filter((o) => o.id !== id) });
+
+// ── The familiar ─────────────────────────────────────────────
+
+export const adoptFamiliar = (g: Grimoire, familiar: Familiar): Grimoire => ({ ...g, familiar });
+
+/** Change the familiar's look, name, or outfit. */
+export const updateFamiliar = (g: Grimoire, patch: Partial<Familiar>): Grimoire =>
+  g.familiar ? { ...g, familiar: { ...g.familiar, ...patch } } : g;
+
+/** Add seasonal pieces to the familiar's wardrobe (they stay once collected). */
+export function collectAccessories(g: Grimoire, ids: string[]): Grimoire {
+  if (!g.familiar || ids.every((id) => g.familiar!.collected.includes(id))) return g;
+  return { ...g, familiar: { ...g.familiar, collected: [...new Set([...g.familiar.collected, ...ids])] } };
+}
 
 // ── Settings & onboarding ────────────────────────────────────
 
