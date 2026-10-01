@@ -163,14 +163,14 @@ export const removeTide = (g: Grimoire, id: string): Grimoire => ({ ...g, tides:
 
 // ── Potions ──────────────────────────────────────────────────
 
-/** Tick or untick a daily potion. `time` is when it was taken, "HH:MM". */
-export function togglePotion(g: Grimoire, date: DateKey, potionId: string, time: string): Grimoire {
+/** Tick or untick one scheduled dose (`slot`) of a potion. `time` is when it was taken, "HH:MM". */
+export function togglePotion(g: Grimoire, date: DateKey, potionId: string, time: string, slot = 0): Grimoire {
   const potion = g.potions.find((p) => p.id === potionId);
   if (!potion) return g;
   return updateDay(g, date, (d) => {
-    const existing = d.potionLogs.find((l) => l.potionId === potionId && !l.extra);
+    const existing = d.potionLogs.find((l) => l.potionId === potionId && !l.extra && (l.slot ?? 0) === slot);
     if (existing) return { ...d, potionLogs: d.potionLogs.filter((l) => l !== existing) };
-    const log = { id: newId(), potionId, name: potion.name, dose: potion.dose, time, extra: false };
+    const log = { id: newId(), potionId, name: potion.name, dose: potion.dose, time, extra: false, slot };
     return { ...d, potionLogs: [...d.potionLogs, log] };
   });
 }

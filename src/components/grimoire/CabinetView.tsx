@@ -3,16 +3,14 @@
 import { useState } from "react";
 import { ArchiveRestore, Pencil, Plus } from "lucide-react";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
-import { formatHHMM } from "@/lib/dates";
 import { archivePotion, deletePotion, potionHasHistory, savePotion } from "@/lib/grimoire";
-import { VESSEL_NAMES } from "@/lib/potions";
+import { VESSEL_NAMES, describeSchedule } from "@/lib/potions";
 import { dispatch } from "@/lib/store";
 import type { Grimoire, Potion } from "@/lib/types";
 import { BLANK_POTION, PotionForm, type PotionDraft } from "./PotionForm";
 import { Section } from "./Section";
 
-const describe = (p: Potion) =>
-  `${p.dose ? `${p.dose} · ` : ""}${p.schedule === "daily" ? `daily at ${formatHHMM(p.time)}` : "as needed"}`;
+const describe = (p: Potion) => `${p.dose ? `${p.dose} · ` : ""}${describeSchedule(p)}`;
 
 export function CabinetView({ g }: { g: Grimoire }) {
   const [editing, setEditing] = useState<PotionDraft | null>(null);

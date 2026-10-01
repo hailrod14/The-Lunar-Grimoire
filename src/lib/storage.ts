@@ -65,16 +65,25 @@ function sanitizeTide(v: unknown): Tide | null {
 function sanitizePotion(v: unknown): Potion | null {
   if (!isObj(v) || typeof v.name !== "string" || !v.name.trim()) return null;
   const colors = Object.keys(LIQUID_COLORS) as (keyof typeof LIQUID_COLORS)[];
+  // Version 2 and earlier had one `time`; version 3 has a list of dose times.
+  const rawTimes = Array.isArray(v.times) ? v.times : isTime(v.time) ? [v.time] : [];
+  const times = [...new Set(rawTimes.filter(isTime))].sort().slice(0, 6);
+  const days = Array.isArray(v.days)
+    ? [...new Set(v.days.filter((d): d is number => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6))].sort((a, b) => a - b)
+    : [];
+  const schedule: Potion["schedule"] =
+    v.schedule === "as-needed" ? "as-needed" : v.schedule === "weekly" && days.length ? "weekly" : "daily";
   return {
     id: str(v.id) || crypto.randomUUID(),
     name: v.name,
     dose: str(v.dose),
-    time: isTime(v.time) ? v.time : "",
+    times: schedule === "as-needed" ? [] : times.length ? times : ["09:00"],
+    days: schedule === "weekly" ? days : [],
     vessel: oneOf(v.vessel, VESSELS) ? v.vessel : "flask",
     color: oneOf(v.color, colors) ? v.color : "gold",
-    schedule: v.schedule === "as-needed" ? "as-needed" : "daily",
+    schedule,
     archived: v.archived === true,
-    reminder: v.reminder === true,
+    reminder: v.reminder === true && schedule !== "as-needed",
   };
 }
 
@@ -97,6 +106,7 @@ function sanitizePotionLog(v: unknown): PotionLog | null {
     dose: str(v.dose),
     time: v.time,
     extra: v.extra === true,
+    ...(v.extra !== true && Number.isInteger(v.slot) && (v.slot as number) >= 0 && (v.slot as number) < 6 ? { slot: v.slot as number } : {}),
   };
 }
 
@@ -131,8 +141,9 @@ function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
 
 /**
  * Older saves are upgraded one version at a time. Add a step here when SCHEMA_VERSION increases.
- * v1 → v2 added symptoms, custom symptoms, and potion reminders; sanitizing fills them with
- * empty defaults, so no data needs rewriting.
+ * v1 → v2 added symptoms, custom symptoms, and potion reminders; v2 → v3 replaced a potion's
+ * single `time` with a list of dose `times` plus weekdays. Sanitizing fills in and converts
+ * all of these, so no data needs rewriting here.
  */
 function migrate(raw: Obj): Obj {
   return raw;

@@ -1,5 +1,6 @@
 import { sortTides, tideDay, tideLength, type Phase } from "./cycle";
 import { addDaysKey, diffKeys, type DateKey } from "./dates";
+import { doseLog, dosesOn } from "./potions";
 import { ELEMENTS, type Element } from "./elements";
 import { symptomName } from "./symptoms";
 import type { Grimoire } from "./types";
@@ -156,7 +157,7 @@ function potionConsistency(g: Grimoire, today: DateKey): PotionConsistency[] {
   const windowEnd = addDaysKey(today, -1);
   const windowStart = addDaysKey(today, -POTION_WINDOW);
   return g.potions
-    .filter((p) => p.schedule === "daily" && !p.archived)
+    .filter((p) => p.schedule !== "as-needed" && !p.archived)
     .map((p) => {
       const takenDays = Object.entries(g.days)
         .filter(([, day]) => day.potionLogs.some((l) => l.potionId === p.id && !l.extra))
@@ -165,8 +166,16 @@ function potionConsistency(g: Grimoire, today: DateKey): PotionConsistency[] {
       // Don't count days before this potion was first taken: it may be new to the cabinet.
       const first = takenDays[0];
       const start = first && first > windowStart ? first : windowStart;
-      const possible = first && start <= windowEnd ? diffKeys(windowEnd, start) + 1 : 0;
-      const taken = takenDays.filter((d) => d >= start && d <= windowEnd).length;
+      let possible = 0;
+      let taken = 0;
+      if (first) {
+        for (let date = start; date <= windowEnd; date = addDaysKey(date, 1)) {
+          for (const dose of dosesOn(p, date)) {
+            possible++;
+            if (doseLog(g.days[date], p.id, dose.slot)) taken++;
+          }
+        }
+      }
       return { id: p.id, name: p.name, taken, possible, share: possible ? taken / possible : 0 };
     })
     .filter((p) => p.possible > 0);

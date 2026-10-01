@@ -68,7 +68,8 @@ describe("the PIN lock", () => {
     expect(await store.changePin("2468", "1357")).toBe(true);
     expect(await store.removePin("2468")).toBe(false);
     expect(await store.removePin("1357")).toBe(true);
-    expect(JSON.parse(saved()).version).toBe(2); // plain again
+    expect(JSON.parse(saved()).kind).toBeUndefined(); // saved unencrypted again
+    expect(JSON.parse(saved()).days).toBeDefined();
   });
 
   it("erases everything, including the PIN", async () => {

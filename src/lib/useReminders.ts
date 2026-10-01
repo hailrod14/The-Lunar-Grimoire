@@ -48,11 +48,10 @@ export function useReminderNotifications(enabled: boolean) {
       const today = dateKey(new Date());
       const now = nowTime();
       const seen = announced(today);
-      const fresh = dueReminders(g, today, now).filter(
-        (p) => !seen.has(p.id) && minutes(now) - minutes(p.time) <= FRESH_MINUTES,
-      );
+      const key = (d: { potion: { id: string }; slot: number }) => `${d.potion.id}:${d.slot}`;
+      const fresh = dueReminders(g, today, now).filter((d) => !seen.has(key(d)) && minutes(now) - minutes(d.time) <= FRESH_MINUTES);
       if (!fresh.length) return;
-      fresh.forEach((p) => seen.add(p.id));
+      fresh.forEach((d) => seen.add(key(d)));
       remember(today, seen);
       const { title, body } = reminderMessage(fresh, g.settings.reminderNames);
       notify(title, body, `potions-${today}-${now}`).catch(() => {});

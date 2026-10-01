@@ -33,6 +33,7 @@ import {
   togglePotion,
 } from "@/lib/grimoire";
 import { dispatch } from "@/lib/store";
+import { doseLog, dosesOn } from "@/lib/potions";
 import { FLOWS, type DayEntry, type Grimoire, type Potion, type PotionLog } from "@/lib/types";
 import { SkyBadge, TideBadge } from "./Badges";
 import { DateNav } from "./DateNav";
@@ -324,8 +325,8 @@ function PotionsSection({
   // Retired potions still appear on days they were taken, so history stays complete.
   const loggedIds = new Set(day.potionLogs.map((l) => l.potionId));
   const potions = g.potions.filter((p) => !p.archived || loggedIds.has(p.id));
-  // Today uses the real clock; past days default to the potion's usual time (editable).
-  const timeFor = (p: Potion) => (date === today ? nowTime() : p.time || "12:00");
+  // Today uses the real clock; past days default to the dose's scheduled time (editable).
+  const timeFor = (scheduled?: string) => (date === today ? nowTime() : scheduled || "12:00");
 
   if (potions.length === 0) {
     return (
@@ -345,16 +346,16 @@ function PotionsSection({
           <PotionRow
             key={p.id}
             potion={p}
-            check={day.potionLogs.find((l) => l.potionId === p.id && !l.extra)}
-            extras={day.potionLogs.filter((l) => l.potionId === p.id && l.extra)}
-            onToggle={() => dispatch((x) => togglePotion(x, date, p.id, timeFor(p)))}
-            onAdd={() => dispatch((x) => addDose(x, date, p.id, timeFor(p)))}
+            date={date}
+            day={day}
+            onToggle={(slot, scheduled) => dispatch((x) => togglePotion(x, date, p.id, timeFor(scheduled), slot))}
+            onAdd={() => dispatch((x) => addDose(x, date, p.id, timeFor(p.times[0])))}
             onRemove={() => dispatch((x) => removeLastDose(x, date, p.id))}
             onTime={(logId, time) => dispatch((x) => setDoseTime(x, date, logId, time))}
           />
         ))}
       </div>
-      {date !== today && <p className="font-journal text-base text-silver-500">Tap a time to correct it.</p>}
+      {date !== today && <p className="font-journal text-base text-silver-500">Tap a taken time to correct it.</p>}
     </Section>
   );
 }
@@ -399,53 +400,52 @@ function TimeChip({ log, onTime }: { log: PotionLog; onTime: (logId: string, tim
 
 type RowProps = {
   potion: Potion;
-  check?: PotionLog;
-  extras: PotionLog[];
-  onToggle: () => void;
+  date: DateKey;
+  day: DayEntry;
+  onToggle: (slot: number, scheduledTime: string) => void;
   onAdd: () => void;
   onRemove: () => void;
   onTime: (logId: string, time: string) => void;
 };
 
-function PotionRow({ potion, check, extras, onToggle, onAdd, onRemove, onTime }: RowProps) {
-  const [burst, setBurst] = useState(0);
-  const daily = potion.schedule === "daily" && !potion.archived;
-  const taken = Boolean(check);
+function PotionRow({ potion, date, day, onToggle, onAdd, onRemove, onTime }: RowProps) {
+  const doses = potion.archived ? [] : dosesOn(potion, date);
+  const extras = day.potionLogs.filter((l) => l.potionId === potion.id && l.extra);
+  const takenCount = doses.filter((d) => doseLog(day, potion.id, d.slot)).length;
+  const allTaken = doses.length > 0 && takenCount === doses.length;
+  // A retired or off-day potion can still show doses that were logged.
+  const strayChecks = day.potionLogs.filter((l) => l.potionId === potion.id && !l.extra && !doses.some((d) => d.slot === (l.slot ?? 0)));
+  const status = potion.archived
+    ? "retired"
+    : potion.schedule === "as-needed"
+      ? "as needed"
+      : doses.length === 0
+        ? "not scheduled today"
+        : doses.length > 1
+          ? `${takenCount} of ${doses.length} doses`
+          : allTaken
+            ? "taken"
+            : formatHHMM(doses[0].time);
 
   return (
-    <div className={`p-2 ${taken ? "bg-midnight-600" : "bg-midnight-950"}`}>
+    <div className={`p-2 ${allTaken ? "bg-midnight-600" : "bg-midnight-950"}`}>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          disabled={!daily}
-          aria-pressed={daily ? taken : undefined}
-          aria-label={daily ? `${taken ? "Unmark" : "Mark"} ${potion.name} as taken` : potion.name}
-          onClick={() => {
-            if (!taken) setBurst((b) => b + 1);
-            onToggle();
-          }}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          <span key={burst} className={`relative shrink-0 ${burst ? "glow-pulse" : ""}`}>
-            <VesselSprite vessel={potion.vessel} color={potion.color} size={32} dim={daily && !taken} />
-            <SparkleBurst burstKey={burst} />
+        <VesselSprite vessel={potion.vessel} color={potion.color} size={32} dim={doses.length > 0 && !allTaken} />
+        <span className="min-w-0 flex-1">
+          <span className={`block leading-tight ${allTaken ? "text-gold-300" : "text-silver-100"}`}>{potion.name}</span>
+          <span className="block font-journal text-base leading-tight text-silver-500">
+            {potion.dose && `${potion.dose} · `}
+            {status}
           </span>
-          <span className="min-w-0">
-            <span className={`block leading-tight ${taken ? "text-gold-300" : "text-silver-100"}`}>{potion.name}</span>
-            <span className="block font-journal text-base leading-tight text-silver-500">
-              {potion.dose && `${potion.dose} · `}
-              {!daily ? (potion.archived ? "retired" : "as needed") : taken ? "taken" : formatHHMM(potion.time)}
-            </span>
-          </span>
-        </button>
+        </span>
 
-        <div className="flex shrink-0 items-center bg-midnight-800" role="group" aria-label={`${daily ? "Extra doses" : "Doses"} of ${potion.name}`}>
+        <div className="flex shrink-0 items-center bg-midnight-800" role="group" aria-label={`${doses.length ? "Extra doses" : "Doses"} of ${potion.name}`}>
           {extras.length > 0 && (
             <>
               <button
                 type="button"
                 onClick={onRemove}
-                aria-label={`Remove the last ${daily ? "extra " : ""}dose of ${potion.name}`}
+                aria-label={`Remove the last ${doses.length ? "extra " : ""}dose of ${potion.name}`}
                 title="Remove the last dose"
                 className="grid size-7 place-items-center text-silver-300 hover:text-blood"
               >
@@ -460,36 +460,41 @@ function PotionRow({ potion, check, extras, onToggle, onAdd, onRemove, onTime }:
             <button
               type="button"
               onClick={onAdd}
-              aria-label={`Log ${daily ? "an extra" : "a"} dose of ${potion.name}`}
-              title={daily ? "Log an extra dose" : "Log a dose"}
+              aria-label={`Log ${doses.length ? "an extra" : "a"} dose of ${potion.name}`}
+              title={doses.length ? "Log an extra dose" : "Log a dose"}
               className="flex h-7 min-w-7 items-center justify-center gap-0.5 text-xs text-silver-300 hover:text-gold-300 sm:px-2"
             >
               <Plus size={14} strokeWidth={3} />
-              {extras.length === 0 && <span className="hidden sm:inline">{daily ? "Extra" : "Take"}</span>}
+              {extras.length === 0 && <span className="hidden sm:inline">{doses.length ? "Extra" : "Take"}</span>}
             </button>
           )}
         </div>
-
-        {daily && (
-          <span
-            aria-hidden
-            className={`grid size-6 shrink-0 place-items-center text-sm ${taken ? "bg-gold-500 text-midnight-950" : "bg-midnight-800 text-transparent"}`}
-          >
-            ✓
-          </span>
-        )}
       </div>
 
-      {(check || extras.length > 0) && (
+      {doses.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {doses.map((d) => (
+            <DoseChip key={d.slot} potion={potion} time={d.time} log={doseLog(day, potion.id, d.slot)} onToggle={() => onToggle(d.slot, d.time)} onTime={onTime} />
+          ))}
+        </div>
+      )}
+
+      {(strayChecks.length > 0 || extras.length > 0) && (
         <p className="mt-1 flex flex-wrap gap-x-2 font-journal text-base leading-tight text-silver-500">
-          {check && (
+          {strayChecks.length > 0 && (
             <span>
-              Taken <TimeChip log={check} onTime={onTime} />
+              Taken{" "}
+              {strayChecks.map((l, i) => (
+                <span key={l.id}>
+                  {i > 0 && " · "}
+                  <TimeChip log={l} onTime={onTime} />
+                </span>
+              ))}
             </span>
           )}
           {extras.length > 0 && (
             <span>
-              {daily ? "Extra" : "Doses"}:{" "}
+              {doses.length ? "Extra" : "Doses"}:{" "}
               {extras.map((l, i) => (
                 <span key={l.id}>
                   {i > 0 && " · "}
@@ -501,5 +506,51 @@ function PotionRow({ potion, check, extras, onToggle, onAdd, onRemove, onTime }:
         </p>
       )}
     </div>
+  );
+}
+
+/** One scheduled dose: tap to check it off (with a sparkle); a taken dose shows its editable time. */
+function DoseChip({
+  potion,
+  time,
+  log,
+  onToggle,
+  onTime,
+}: {
+  potion: Potion;
+  time: string;
+  log?: PotionLog;
+  onToggle: () => void;
+  onTime: (logId: string, time: string) => void;
+}) {
+  const [burst, setBurst] = useState(0);
+  const taken = Boolean(log);
+  return (
+    <span className={`flex items-center gap-1 pr-2 ${taken ? "bg-gold-500/20" : "bg-midnight-800"}`}>
+      <button
+        type="button"
+        aria-pressed={taken}
+        aria-label={`${taken ? "Unmark" : "Mark"} the ${formatHHMM(time)} dose of ${potion.name} as taken`}
+        onClick={() => {
+          if (!taken) setBurst((b) => b + 1);
+          onToggle();
+        }}
+        className="flex items-center gap-1.5 py-1 pl-1"
+      >
+        <span
+          key={burst}
+          className={`relative grid size-6 place-items-center text-sm ${burst ? "glow-pulse" : ""} ${taken ? "bg-gold-500 text-midnight-950" : "bg-midnight-950 text-transparent"}`}
+        >
+          ✓
+          <SparkleBurst burstKey={burst} />
+        </span>
+        <span className={`font-journal text-lg ${taken ? "text-gold-300" : "text-silver-300"}`}>{formatHHMM(time)}</span>
+      </button>
+      {log && (
+        <span className="font-journal text-base text-silver-500">
+          · <TimeChip log={log} onTime={onTime} />
+        </span>
+      )}
+    </span>
   );
 }

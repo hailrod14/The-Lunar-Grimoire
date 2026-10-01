@@ -3,7 +3,7 @@ import type { ElementLog, TimeBlock } from "./elements";
 import type { LiquidColor, Vessel } from "./potions";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export type Flow = "spotting" | "light" | "medium" | "heavy" | "clots";
 
@@ -38,15 +38,20 @@ export type Settings = {
 /** One period. `end` is missing while the tide is still flowing. */
 export type Tide = { id: string; start: DateKey; end?: DateKey };
 
+export type Schedule = "daily" | "weekly" | "as-needed";
+
 export type Potion = {
   id: string;
   name: string;
   dose: string;
-  /** Usual time as "HH:MM"; empty for as-needed potions. */
-  time: string;
+  /** Dose times as "HH:MM", earliest first: one check-off per time. Empty for as-needed potions. */
+  times: string[];
+  /** For "weekly" potions: the weekdays it's taken (0 = Sunday … 6 = Saturday). */
+  days: number[];
   vessel: Vessel;
   color: LiquidColor;
-  schedule: "daily" | "as-needed";
+  /** Every day, certain days of the week, or only when needed. */
+  schedule: Schedule;
   /** Retired potions leave the checklist but keep their history. */
   archived: boolean;
   /** Remind at `time` each day (daily potions only). */
@@ -61,8 +66,10 @@ export type PotionLog = {
   dose: string;
   /** Time taken as "HH:MM". */
   time: string;
-  /** False for the daily check-off, true for extra / as-needed doses. */
+  /** False for a scheduled check-off, true for extra / as-needed doses. */
   extra: boolean;
+  /** Which of the potion's scheduled doses this checks off (index into `times`). */
+  slot?: number;
 };
 
 export type SymptomSeverity = 1 | 2 | 3;

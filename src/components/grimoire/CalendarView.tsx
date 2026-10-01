@@ -8,6 +8,7 @@ import { PHASE_LABEL, nextTideStart, tideDay, type Phase, type TideDay } from "@
 import { addMonths, dateKey, formatMonth, formatShort, monthGrid, parseKey, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { loggedElements } from "@/lib/grimoire";
+import { allDosesOn, doseLog } from "@/lib/potions";
 import type { DayEntry, Grimoire } from "@/lib/types";
 import { SkyBadge, TideBadge } from "./Badges";
 import { TodayCard } from "./TodayCard";
@@ -21,12 +22,12 @@ export const PHASE_BG: Record<Phase, string> = {
   waning: "bg-tide-waning",
 };
 
-/** Whether every daily potion was ticked off that day. */
-function potionStatus(g: Grimoire, day?: DayEntry): "all" | "some" | "none" {
-  const taken = new Set(day?.potionLogs.filter((l) => !l.extra).map((l) => l.potionId));
-  if (taken.size === 0) return "none";
-  const daily = g.potions.filter((p) => p.schedule === "daily" && !p.archived);
-  return daily.every((p) => taken.has(p.id)) ? "all" : "some";
+/** Whether every scheduled dose was taken that day. */
+function potionStatus(g: Grimoire, date: DateKey, day?: DayEntry): "all" | "some" | "none" {
+  const doses = allDosesOn(g, date);
+  const taken = doses.filter((d) => doseLog(day, d.potion.id, d.slot)).length;
+  if (taken === 0) return day?.potionLogs.some((l) => !l.extra) ? "some" : "none";
+  return taken === doses.length ? "all" : "some";
 }
 
 /** The lines under "Your Tide" in the header. */
@@ -96,7 +97,7 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                 const entry = g.days[key];
                 const future = key > today;
                 const elements = loggedElements(entry);
-                const status = future ? "none" : potionStatus(g, entry);
+                const status = future ? "none" : potionStatus(g, key, entry);
                 const bled = tide?.bleeding || Boolean(entry?.flow);
                 return (
                   <button

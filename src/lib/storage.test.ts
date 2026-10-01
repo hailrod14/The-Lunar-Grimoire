@@ -30,7 +30,7 @@ const sample = (): Grimoire => ({
   tides: [{ id: "t1", start: "2026-09-22", end: "2026-09-26" }],
   customSymptoms: [{ id: "custom-a", name: "Dizzy", archived: false }],
   potions: [
-    { id: "p1", name: "Iron Tincture", dose: "1 dropper", time: "09:00", vessel: "dropper", color: "rose", schedule: "daily", archived: false, reminder: true },
+    { id: "p1", name: "Iron Tincture", dose: "1 dropper", times: ["09:00"], days: [], vessel: "dropper", color: "rose", schedule: "daily", archived: false, reminder: true },
   ],
   days: {
     "2026-09-30": {
@@ -129,7 +129,7 @@ describe("export and import", () => {
 
     expect(g.settings).toMatchObject({ defaultCycleLength: 28, soundEnabled: false, musicEnabled: true, musicVolume: 0.5 });
     expect(g.tides).toEqual([{ id: "b", start: "2026-09-22" }]); // bad date dropped, backwards end dropped
-    expect(g.potions).toMatchObject([{ id: "p", name: "Magnesium", vessel: "flask", color: "gold", time: "" }]);
+    expect(g.potions).toMatchObject([{ id: "p", name: "Magnesium", vessel: "flask", color: "gold", times: ["09:00"], schedule: "daily" }]);
     expect(Object.keys(g.days)).toEqual(["2026-09-30"]);
 
     const day = g.days["2026-09-30"];
@@ -139,6 +139,26 @@ describe("export and import", () => {
     expect(day.elements.night).toEqual([]);
     expect(day.potionLogs).toHaveLength(1);
     expect(day.symptoms).toEqual([{ id: "cramps", severity: 1 }]); // unknown dropped, duplicate dropped
+  });
+
+  it("upgrades version 2 potions to dose lists and weekdays", () => {
+    const v2 = {
+      version: 2,
+      potions: [
+        { id: "a", name: "Iron", time: "08:30", schedule: "daily" },
+        { id: "b", name: "Ibuprofen", time: "", schedule: "as-needed", reminder: true },
+        { id: "c", name: "Odd", schedule: "weekly", days: [] },
+      ],
+      days: { "2026-09-30": { potionLogs: [{ id: "l", potionId: "a", time: "08:31", extra: false }] } },
+    };
+    const result = sanitizeGrimoire(v2);
+    if (!result.ok) throw new Error(result.error);
+    expect(result.grimoire.potions.map((p) => [p.schedule, p.times, p.days, p.reminder])).toEqual([
+      ["daily", ["08:30"], [], false],
+      ["as-needed", [], [], false], // as-needed potions can't have reminders
+      ["daily", ["09:00"], [], false], // weekly with no days falls back to daily
+    ]);
+    expect(result.grimoire.days["2026-09-30"].potionLogs[0].slot).toBeUndefined(); // counts as the first dose
   });
 
   it("upgrades a version 1 Grimoire, filling in the new fields", () => {
@@ -152,7 +172,8 @@ describe("export and import", () => {
     const result = sanitizeGrimoire(v1);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.grimoire.version).toBe(2);
+    expect(result.grimoire.version).toBe(3);
+    expect(result.grimoire.potions[0]).toMatchObject({ times: ["09:00"], days: [], schedule: "daily" });
     expect(result.grimoire.customSymptoms).toEqual([]);
     expect(result.grimoire.potions[0].reminder).toBe(false);
     expect(result.grimoire.days["2026-09-30"]).toMatchObject({ journal: "Old entry", symptoms: [] });

@@ -6,7 +6,8 @@ const potion = (over: Partial<Potion>): Potion => ({
   id: "p",
   name: "Iron Tincture",
   dose: "1 dropper",
-  time: "09:00",
+  times: ["09:00"],
+  days: [],
   vessel: "dropper",
   color: "rose",
   schedule: "daily",
@@ -19,9 +20,9 @@ function grimoire(): Grimoire {
   const g = newGrimoire();
   g.potions = [
     potion({ id: "iron" }),
-    potion({ id: "mag", name: "Magnesium; calm, sleep", time: "20:00" }),
+    potion({ id: "mag", name: "Magnesium; calm, sleep", times: ["20:00"] }),
     potion({ id: "quiet", reminder: false }),
-    potion({ id: "asneeded", schedule: "as-needed", time: "" }),
+    potion({ id: "asneeded", schedule: "as-needed", times: [] }),
     potion({ id: "retired", archived: true }),
   ];
   return g;
@@ -29,9 +30,9 @@ function grimoire(): Grimoire {
 
 describe("dueReminders", () => {
   it("returns reminded daily potions whose time has passed", () => {
-    expect(dueReminders(grimoire(), "2026-09-30", "08:59").map((p) => p.id)).toEqual([]);
-    expect(dueReminders(grimoire(), "2026-09-30", "09:00").map((p) => p.id)).toEqual(["iron"]);
-    expect(dueReminders(grimoire(), "2026-09-30", "21:00").map((p) => p.id)).toEqual(["iron", "mag"]);
+    expect(dueReminders(grimoire(), "2026-09-30", "08:59").map((d) => d.potion.id)).toEqual([]);
+    expect(dueReminders(grimoire(), "2026-09-30", "09:00").map((d) => d.potion.id)).toEqual(["iron"]);
+    expect(dueReminders(grimoire(), "2026-09-30", "21:00").map((d) => d.potion.id)).toEqual(["iron", "mag"]);
   });
 
   it("skips potions already checked off today (but not extra doses)", () => {
@@ -40,7 +41,26 @@ describe("dueReminders", () => {
     day.potionLogs.push({ id: "a", potionId: "iron", name: "Iron", dose: "", time: "09:02", extra: false });
     day.potionLogs.push({ id: "b", potionId: "mag", name: "Mag", dose: "", time: "12:00", extra: true });
     g.days["2026-09-30"] = day;
-    expect(dueReminders(g, "2026-09-30", "21:00").map((p) => p.id)).toEqual(["mag"]);
+    expect(dueReminders(g, "2026-09-30", "21:00").map((d) => d.potion.id)).toEqual(["mag"]);
+  });
+});
+
+describe("dueReminders with several doses and weekdays", () => {
+  it("reminds for each dose that's due and untaken", () => {
+    const g = newGrimoire();
+    g.potions = [potion({ id: "twice", times: ["09:00", "21:00"] })];
+    expect(dueReminders(g, "2026-09-30", "21:30").map((d) => d.slot)).toEqual([0, 1]);
+    const day = emptyDay();
+    day.potionLogs.push({ id: "a", potionId: "twice", name: "x", dose: "", time: "09:01", extra: false, slot: 0 });
+    g.days["2026-09-30"] = day;
+    expect(dueReminders(g, "2026-09-30", "21:30").map((d) => d.slot)).toEqual([1]);
+  });
+
+  it("only reminds on a weekly potion's days", () => {
+    const g = newGrimoire();
+    g.potions = [potion({ id: "mwf", schedule: "weekly", days: [1, 3, 5] })];
+    expect(dueReminders(g, "2026-09-30", "10:00")).toHaveLength(1); // a Wednesday
+    expect(dueReminders(g, "2026-10-01", "10:00")).toHaveLength(0); // a Thursday
   });
 });
 
@@ -66,6 +86,16 @@ describe("remindersCalendar", () => {
     expect(ics).toContain("DTSTAMP:20260930T120000Z\r\n");
     expect(ics).toContain(String.raw`SUMMARY:Magnesium\; calm\, sleep (1 dropper)` + "\r\n");
     expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(2);
+  });
+
+  it("repeats weekly potions on their weekdays, starting on one of them", () => {
+    const g = newGrimoire();
+    g.potions = [potion({ id: "mwf", schedule: "weekly", days: [1, 3, 5], times: ["08:00", "20:00"] })];
+    const ics = remindersCalendar(g, "2026-09-30", true, now)!;
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(ics).toContain("RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR\r\n");
+    expect(ics).toContain("DTSTART:20261002T080000\r\n"); // Friday, the first scheduled day after today
+    expect(ics).toContain("DTSTART:20261002T200000\r\n");
   });
 
   it("uses a generic title when names are hidden", () => {

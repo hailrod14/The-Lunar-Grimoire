@@ -24,7 +24,8 @@ import { newGrimoire, type Grimoire, type Potion } from "./types";
 const potion: Omit<Potion, "id"> = {
   name: "Iron Tincture",
   dose: "1 dropper",
-  time: "09:00",
+  times: ["09:00"],
+  days: [],
   vessel: "dropper",
   color: "rose",
   schedule: "daily",
@@ -109,6 +110,19 @@ describe("tides", () => {
 });
 
 describe("potions", () => {
+  it("checks off each dose of a twice-daily potion separately", () => {
+    let g = savePotion(newGrimoire(), { ...potion, times: ["09:00", "21:00"] });
+    const id = g.potions[0].id;
+    g = togglePotion(g, "2026-09-30", id, "09:02", 0);
+    g = togglePotion(g, "2026-09-30", id, "21:05", 1);
+    expect(getDay(g, "2026-09-30").potionLogs.map((l) => [l.slot, l.time])).toEqual([
+      [0, "09:02"],
+      [1, "21:05"],
+    ]);
+    g = togglePotion(g, "2026-09-30", id, "21:30", 1);
+    expect(getDay(g, "2026-09-30").potionLogs.map((l) => l.slot)).toEqual([0]);
+  });
+
   it("ticks and unticks a daily potion, remembering its name and dose", () => {
     const [g0, id] = withPotion();
     const g1 = togglePotion(g0, "2026-09-30", id, "09:04");

@@ -26,7 +26,7 @@ function download(text: string, filename: string, type: string) {
 export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey }) {
   const [permission, setPermission] = useState(() => (notificationsSupported() ? Notification.permission : "unsupported"));
   const [saved, setSaved] = useState(false);
-  const daily = g.potions.filter((p) => p.schedule === "daily" && !p.archived);
+  const daily = g.potions.filter((p) => p.schedule !== "as-needed" && !p.archived);
   const reminded = daily.filter((p) => p.reminder);
   const showNames = g.settings.reminderNames;
 
@@ -37,7 +37,7 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
       </p>
 
       {daily.length === 0 ? (
-        <p className="font-journal text-lg text-silver-500">Brew a daily potion in the Cabinet to set reminders.</p>
+        <p className="font-journal text-lg text-silver-500">Brew a scheduled potion in the Cabinet to set reminders.</p>
       ) : (
         <ul className="space-y-1">
           {daily.map((p) => (
@@ -49,7 +49,7 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
                 className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${p.reminder ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
               >
                 <span>{p.name}</span>
-                <span className="font-journal text-lg">{p.reminder ? `🔔 ${formatHHMM(p.time)}` : "off"}</span>
+                <span className="font-journal text-lg">{p.reminder ? `🔔 ${p.times.map(formatHHMM).join(", ")}` : "off"}</span>
               </button>
             </li>
           ))}
@@ -104,7 +104,7 @@ export function RemindersSettings({ g, today }: { g: Grimoire; today: DateKey })
           ? "Turn on a reminder above first."
           : saved
             ? "Open the downloaded file to add the reminders to your calendar. If you change potions or times later, add it again and remove the old events."
-            : `Adds ${reminded.length} daily event${reminded.length === 1 ? "" : "s"} with an alarm at each potion's time.`}
+            : `Adds a repeating event with an alarm for each reminded dose (${reminded.reduce((n, p) => n + p.times.length, 0)} in all).`}
       </p>
     </Section>
   );

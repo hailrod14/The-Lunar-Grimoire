@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
-import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, type LiquidColor } from "@/lib/potions";
-import type { Potion } from "@/lib/types";
+import { Minus, Plus } from "lucide-react";
+import { LIQUID_COLORS, VESSELS, VESSEL_NAMES, WEEKDAYS_SHORT, type LiquidColor } from "@/lib/potions";
+import type { Potion, Schedule } from "@/lib/types";
 import { Section } from "./Section";
 
 export type PotionDraft = Omit<Potion, "id"> & { id?: string };
@@ -11,13 +12,30 @@ export type PotionDraft = Omit<Potion, "id"> & { id?: string };
 export const BLANK_POTION: PotionDraft = {
   name: "",
   dose: "",
-  time: "09:00",
+  times: ["09:00"],
+  days: [],
   vessel: "flask",
   color: "gold",
   schedule: "daily",
   archived: false,
   reminder: false,
 };
+
+const SCHEDULES: { id: Schedule; label: string }[] = [
+  { id: "daily", label: "Every day" },
+  { id: "weekly", label: "Certain days" },
+  { id: "as-needed", label: "As needed" },
+];
+
+const MAX_DOSES = 6;
+
+/** A sensible next dose time: 12 hours after the last (or 9 pm). */
+function nextTime(times: string[]): string {
+  const last = times.at(-1);
+  if (!last) return "09:00";
+  const h = (Number(last.slice(0, 2)) + 12) % 24;
+  return `${String(h).padStart(2, "0")}:${last.slice(3)}`;
+}
 
 const input =
   "pixel-frame block w-[calc(100%-8px)] bg-midnight-950 px-3 py-2 font-journal text-xl text-silver-100 placeholder:text-silver-700 focus:outline-none";
@@ -31,6 +49,7 @@ type Props = {
 
 export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Props) {
   const [p, setP] = useState(initial);
+  const [problem, setProblem] = useState<string | null>(null);
   const set = (patch: Partial<PotionDraft>) => setP((x) => ({ ...x, ...patch }));
 
   return (
@@ -39,7 +58,16 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
       onSubmit={(e) => {
         e.preventDefault();
         if (!p.name.trim()) return;
-        onSave({ ...p, name: p.name.trim(), dose: p.dose.trim(), time: p.schedule === "daily" ? p.time : "" });
+        if (p.schedule === "weekly" && p.days.length === 0) return setProblem("Choose at least one day.");
+        const scheduled = p.schedule !== "as-needed";
+        onSave({
+          ...p,
+          name: p.name.trim(),
+          dose: p.dose.trim(),
+          times: scheduled ? [...new Set(p.times.filter(Boolean))].sort() : [],
+          days: p.schedule === "weekly" ? [...p.days].sort((a, b) => a - b) : [],
+          reminder: scheduled && p.reminder,
+        });
       }}
     >
       <div className="flex flex-col items-center gap-2">
@@ -61,34 +89,90 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
       </Section>
 
       <Section title="When">
-        <div className="grid grid-cols-2 gap-1">
-          {(["daily", "as-needed"] as const).map((s) => (
+        <div className="grid grid-cols-3 gap-1">
+          {SCHEDULES.map((option) => (
             <button
-              key={s}
+              key={option.id}
               type="button"
-              aria-pressed={p.schedule === s}
-              onClick={() => set({ schedule: s, time: s === "daily" && !p.time ? "09:00" : p.time })}
-              className={`py-2 text-sm ${p.schedule === s ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
+              aria-pressed={p.schedule === option.id}
+              onClick={() => set({ schedule: option.id, times: option.id !== "as-needed" && p.times.length === 0 ? ["09:00"] : p.times })}
+              className={`py-2 text-sm ${p.schedule === option.id ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
             >
-              {s === "daily" ? "Every day" : "As needed"}
+              {option.label}
             </button>
           ))}
         </div>
-        {p.schedule === "daily" && (
-          <label className="block space-y-1">
-            <span className="text-sm text-silver-300">Usual time</span>
-            <input type="time" required className={input} value={p.time} onChange={(e) => set({ time: e.target.value })} />
-          </label>
+
+        {p.schedule === "weekly" && (
+          <div className="grid grid-cols-7 gap-1" role="group" aria-label="Days of the week">
+            {WEEKDAYS_SHORT.map((name, day) => {
+              const on = p.days.includes(day);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    setProblem(null);
+                    set({ days: on ? p.days.filter((d) => d !== day) : [...p.days, day] });
+                  }}
+                  className={`py-2 text-xs ${on ? "bg-gold-500 text-midnight-950" : "bg-midnight-950 text-silver-500"}`}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
         )}
-        {p.schedule === "daily" && (
-          <button
-            type="button"
-            aria-pressed={p.reminder}
-            onClick={() => set({ reminder: !p.reminder })}
-            className={`w-full px-3 py-2 text-left text-sm ${p.reminder ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
-          >
-            🔔 {p.reminder ? "Remind me at this time" : "No reminder"}
-          </button>
+
+        {p.schedule !== "as-needed" && (
+          <div className="space-y-2">
+            <span className="text-sm text-silver-300">{p.times.length > 1 ? "Dose times" : "Usual time"}</span>
+            {p.times.map((time, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="time"
+                  required
+                  aria-label={`Dose ${i + 1} time`}
+                  className={input}
+                  value={time}
+                  onChange={(e) => set({ times: p.times.map((t, j) => (j === i ? e.target.value : t)) })}
+                />
+                {p.times.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label={`Remove dose ${i + 1}`}
+                    onClick={() => set({ times: p.times.filter((_, j) => j !== i) })}
+                    className="grid size-9 shrink-0 place-items-center bg-midnight-950 text-silver-300 hover:text-blood"
+                  >
+                    <Minus size={16} strokeWidth={3} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {p.times.length < MAX_DOSES && (
+              <button
+                type="button"
+                onClick={() => set({ times: [...p.times, nextTime(p.times)] })}
+                className="pixel-button pixel-button--ghost"
+              >
+                <Plus size={14} strokeWidth={3} /> Another dose each day
+              </button>
+            )}
+            <button
+              type="button"
+              aria-pressed={p.reminder}
+              onClick={() => set({ reminder: !p.reminder })}
+              className={`w-full px-3 py-2 text-left text-sm ${p.reminder ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
+            >
+              🔔 {p.reminder ? (p.times.length > 1 ? "Remind me at each time" : "Remind me at this time") : "No reminder"}
+            </button>
+          </div>
+        )}
+        {problem && (
+          <p role="alert" className="font-journal text-lg text-fire">
+            {problem}
+          </p>
         )}
         <p className="font-journal text-base text-silver-500">Any potion can also have extra doses logged on the day page.</p>
       </Section>

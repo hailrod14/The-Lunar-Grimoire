@@ -6,7 +6,8 @@ import { usePageTurn } from "@/components/pixel/usePageTurn";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 import { MAX_TIDE_DAYS } from "@/lib/cycle";
-import { addDaysKey, formatHHMM, type DateKey } from "@/lib/dates";
+import { addDaysKey, type DateKey } from "@/lib/dates";
+import { describeSchedule } from "@/lib/potions";
 import { completeOnboarding } from "@/lib/grimoire";
 import { parseGrimoireFile } from "@/lib/storage";
 import { dispatch, replaceGrimoire } from "@/lib/store";
@@ -195,7 +196,7 @@ export function Onboarding({ today }: { today: DateKey }) {
                         <p className="text-silver-100">{p.name}</p>
                         <p className="font-journal text-lg leading-tight text-silver-500">
                           {p.dose && `${p.dose} · `}
-                          {p.schedule === "daily" ? `daily at ${formatHHMM(p.time)}` : "as needed"}
+                          {describeSchedule(p)}
                         </p>
                       </div>
                       <button

@@ -6,6 +6,7 @@ import { addDaysKey, diffKeys, formatHHMM, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { beginTide, endTide, getDay, loggedElements, reopenTide, setFlow, tideAt } from "@/lib/grimoire";
 import { dispatch } from "@/lib/store";
+import { allDosesOn, doseLog } from "@/lib/potions";
 import { dueReminders } from "@/lib/reminders";
 import { FLOWS, type Grimoire } from "@/lib/types";
 import { useNow } from "@/lib/useNow";
@@ -20,8 +21,8 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
   const awaiting = now ? dueReminders(g, today, now) : [];
   const [endDate, setEndDate] = useState(() => addDaysKey(today, -1));
   const day = getDay(g, today);
-  const daily = g.potions.filter((p) => p.schedule === "daily" && !p.archived);
-  const taken = new Set(day.potionLogs.filter((l) => !l.extra).map((l) => l.potionId));
+  const doses = allDosesOn(g, today);
+  const takenDoses = doses.filter((d) => doseLog(day, d.potion.id, d.slot)).length;
   const elements = loggedElements(day);
 
   const tracking = g.settings.cycleTracking;
@@ -37,7 +38,7 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
         <button type="button" onClick={onOpenToday} className="pixel-frame pixel-frame--gold block w-full p-3 text-left">
           <span className="block text-gold-300">⏰ Awaiting you</span>
           <span className="block font-journal text-lg text-silver-100">
-            {awaiting.map((p) => `${p.name} (${formatHHMM(p.time)})`).join(" · ")}
+            {awaiting.map((d) => `${d.potion.name} (${formatHHMM(d.time)})`).join(" · ")}
           </span>
         </button>
       )}
@@ -129,9 +130,9 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
 
         <div className="flex flex-wrap gap-x-4 gap-y-1 font-journal text-lg text-silver-300">
           <span>Elements: {elements.map((e) => ELEMENT_INFO[e].name).join(", ") || "none yet"}</span>
-          {daily.length > 0 && (
+          {doses.length > 0 && (
             <span>
-              Potions: {daily.filter((p) => taken.has(p.id)).length} of {daily.length} taken
+              Potions: {takenDoses} of {doses.length} {doses.length === 1 ? "dose" : "doses"} taken
             </span>
           )}
           <span>Journal: {day.journal.trim() ? "written" : "not yet"}</span>

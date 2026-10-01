@@ -12,9 +12,9 @@ function fixture(): Grimoire {
   g.settings.onboarded = true;
   g.tides = STARTS.map((start, i) => ({ id: `t${i}`, start, end: addDaysKey(start, 4) }));
   g.potions = [
-    { id: "iron", name: "Iron", dose: "", time: "09:00", vessel: "vial", color: "rose", schedule: "daily", archived: false, reminder: false },
-    { id: "new", name: "Never taken", dose: "", time: "09:00", vessel: "vial", color: "gold", schedule: "daily", archived: false, reminder: false },
-    { id: "old", name: "Retired", dose: "", time: "09:00", vessel: "vial", color: "gold", schedule: "daily", archived: true, reminder: false },
+    { id: "iron", name: "Iron", dose: "", times: ["09:00"], days: [], vessel: "vial", color: "rose", schedule: "daily", archived: false, reminder: false },
+    { id: "new", name: "Never taken", dose: "", times: ["09:00"], days: [], vessel: "vial", color: "gold", schedule: "daily", archived: false, reminder: false },
+    { id: "old", name: "Retired", dose: "", times: ["09:00"], days: [], vessel: "vial", color: "gold", schedule: "daily", archived: true, reminder: false },
   ];
   const log = (date: string, element: Element, aspect: "light" | "shadow" = "light") => {
     const day = g.days[date] ?? emptyDay();
@@ -69,6 +69,16 @@ describe("computeInsights", () => {
   it("summarizes completed cycles", () => {
     expect(insights.cycles).toMatchObject({ average: 28, shortest: 28, longest: 28, tideAverage: 5 });
     expect(insights.cycles!.bars).toHaveLength(3);
+  });
+
+  it("counts each scheduled dose, and only on scheduled days", () => {
+    const g = fixture();
+    g.potions = [{ ...g.potions[0], times: ["09:00", "21:00"] }];
+    // Only morning doses were logged, so about half the doses were taken.
+    expect(computeInsights(g, TODAY).potions[0]).toMatchObject({ taken: 19, possible: 42 });
+    g.potions = [{ ...g.potions[0], times: ["09:00"], schedule: "weekly", days: [1, 3, 5] }];
+    const weekly = computeInsights(g, TODAY).potions[0];
+    expect(weekly.possible).toBe(9); // Mon/Wed/Fri from Aug 20 to Sep 9
   });
 
   it("measures potion consistency only since a potion was first taken", () => {
