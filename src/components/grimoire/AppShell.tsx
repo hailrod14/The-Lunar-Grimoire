@@ -12,6 +12,7 @@ import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { applyTheme, resolveTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { usePushSync } from "@/lib/push";
+import { coverSnapshot, saveCoverSnapshot } from "@/lib/coverSnapshot";
 import { familiarMood, newlyInSeason } from "@/lib/familiars";
 import { awardStickers, unawarded } from "@/lib/stickers";
 import { startSync } from "@/lib/sync";
@@ -107,7 +108,7 @@ export function AppShell() {
           </p>
         </div>
       )}
-      <Book g={state.grimoire} today={today} />
+      <Book g={state.grimoire} today={today} pinSet={state.pinSet} />
     </>
   );
 }
@@ -126,8 +127,15 @@ function useFamiliarRewards(g: Grimoire, today: DateKey) {
   }, [due, today]);
 }
 
-function Book({ g, today }: { g: Grimoire; today: DateKey }) {
+/** Keep the locked cover's look (familiar and stickers only) up to date while a PIN is set. */
+function useCoverSnapshot(g: Grimoire, pinSet: boolean) {
+  const snapshot = pinSet ? JSON.stringify(coverSnapshot(g)) : "null";
+  useEffect(() => saveCoverSnapshot(JSON.parse(snapshot)), [snapshot]);
+}
+
+function Book({ g, today, pinSet }: { g: Grimoire; today: DateKey; pinSet: boolean }) {
   useFamiliarRewards(g, today);
+  useCoverSnapshot(g, pinSet);
   const [view, setView] = useState<View>("calendar");
   const [selected, setSelected] = useState<DateKey>(today);
   // The book opens closed, on its cover; the calendar is the first page.

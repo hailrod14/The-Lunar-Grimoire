@@ -505,3 +505,11 @@ svg[shape-rendering="crispEdges"] {
   40%, 80% { transform: translateX(6px); }
 }
 .lock-rattle { animation: lock-rattle 400ms steps(5, end); }
+
+/* Once open, the lock and its strap drop away from the cover. */
+@keyframes lock-fall {
+  0%, 45% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(48px) rotate(14deg); opacity: 0; }
+}
+.lock-fall { animation: lock-fall 900ms steps(9, end) forwards; }
+.strap-fall { animation: lock-fall 900ms steps(9, end) 120ms forwards; }

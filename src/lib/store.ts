@@ -274,6 +274,7 @@ export async function eraseEverything(): Promise<void> {
   companion = null;
   try {
     localStorage.removeItem(SYNC_STORAGE_KEY);
+    localStorage.removeItem(`${STORAGE_KEY}:cover`);
     for (const key of Object.keys(localStorage)) if (key.startsWith(`${STORAGE_KEY}:reminded:`)) localStorage.removeItem(key);
   } catch {
     // Reminder bookkeeping is harmless to leave behind.

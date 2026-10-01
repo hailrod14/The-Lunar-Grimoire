@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SparkleBurst } from "@/components/pixel/SparkleBurst";
 import { VesselSprite, type LiquidColor, type Vessel } from "@/components/sprites/VesselSprite";
 import { Cover } from "@/components/grimoire/Cover";
-import { LockScreen } from "@/components/grimoire/LockScreen";
+import { COVER_KEY, type CoverSnapshot } from "@/lib/coverSnapshot";
 import type { Sticker } from "@/lib/types";
 
 export function PotionDemo({ name, dose, vessel, color }: { name: string; dose: string; vessel: Vessel; color: LiquidColor }) {
@@ -105,7 +106,22 @@ export function CoverDemo() {
   );
 }
 
+/** Drawn only in the browser, where the sample cover look is saved. */
+const LockScreen = dynamic(() => import("@/components/grimoire/LockScreen").then((m) => m.LockScreen), { ssr: false });
+
 /** The lock screen's look, without a sealed Grimoire behind it (any code "opens"). */
 export function CombinationLockDemo() {
+  // A sample locked-cover look, set before the lock screen reads it.
+  useState(() => {
+    try {
+      const snapshot: CoverSnapshot = {
+        familiar: { species: "bat", coat: 0, head: "witch-hat" },
+        stickers: SAMPLE_STICKERS.slice(0, 3).map(({ kind, look, x, y, rot }) => ({ kind, look: { ...look, species: "bat", coat: 0 }, x, y, rot })),
+      };
+      if (typeof window !== "undefined") localStorage.setItem(COVER_KEY, JSON.stringify(snapshot));
+    } catch {
+      // Just the plain cover, then.
+    }
+  });
   return <LockScreen />;
 }

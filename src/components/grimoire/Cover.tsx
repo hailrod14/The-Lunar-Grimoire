@@ -4,7 +4,8 @@ import { StarGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL, type TideDay } from "@/lib/cycle";
 import { formatLong, parseKey, type DateKey } from "@/lib/dates";
 import type { Mood } from "@/lib/familiars";
-import type { Familiar } from "@/lib/types";
+import { skyMoonPhase } from "@/lib/moon";
+import type { Familiar, Sticker } from "@/lib/types";
 import { CoverStickers } from "./Stickers";
 
 /** Tooled-gold corner filigree; mirrored for the other three corners. */
@@ -91,6 +92,55 @@ export function CoverDecor({ clasp = true }: { clasp?: boolean }) {
   );
 }
 
+/** The title, the moon in its ring of stars, and the date. */
+function CoverFace({
+  moonPhase,
+  today,
+  line,
+  hint,
+  compact = false,
+}: {
+  moonPhase: number;
+  today: DateKey;
+  line?: string;
+  hint?: React.ReactNode;
+  /** Gathered toward the top, leaving the lower cover for the lock. */
+  compact?: boolean;
+}) {
+  return (
+    <span
+      className={`relative flex min-h-[85dvh] flex-col items-center gap-6 pr-10 pl-14 ${compact ? "justify-start gap-4 pt-12" : "justify-center"}`}
+    >
+      <span className="pixel-title text-3xl leading-tight sm:text-4xl">
+        The Lunar
+        <br />
+        Grimoire
+      </span>
+
+      <span aria-hidden className={`relative block ${compact ? "size-36 sm:size-44" : "size-44 sm:size-52"}`}>
+        <span className="absolute inset-3 rounded-full border-4 border-dashed border-gold-900" />
+        {RING.map((s, i) => (
+          <span key={i} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${s.left}%`, top: `${s.top}%` }}>
+            <StarGlyph size={s.big ? 15 : 10} />
+          </span>
+        ))}
+        <span className="absolute inset-0 grid place-items-center">
+          <span className="animate-float">
+            <PixelMoon phase={moonPhase} variant="tide" size={compact ? 84 : 104} resolution={22} />
+          </span>
+        </span>
+      </span>
+
+      <span className="space-y-1">
+        <span className="block font-journal text-xl text-gold-300">{formatLong(parseKey(today))}</span>
+        {line && <span className="block font-journal text-lg text-gold-700">{line}</span>}
+      </span>
+
+      {hint}
+    </span>
+  );
+}
+
 type Props = { tide: TideDay | null; tracking: boolean; today: DateKey; familiar?: Familiar; mood: Mood; onOpen: () => void };
 
 /** The closed grimoire. Tapping anywhere opens it to the calendar; stickers can be dragged around. */
@@ -99,51 +149,65 @@ export function Cover({ tide, tracking, today, familiar, mood, onOpen }: Props) 
 
   return (
     <div className="relative">
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label="Open the Grimoire"
-      className="cover-gilt group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
-      style={LEATHER}
-    >
-      <CoverDecor />
-      <span className="relative flex min-h-[85dvh] flex-col items-center justify-center gap-6 pr-10 pl-14">
-        <span className="pixel-title text-3xl leading-tight sm:text-4xl">
-          The Lunar
-          <br />
-          Grimoire
-        </span>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label="Open the Grimoire"
+        className="cover-gilt group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
+        style={LEATHER}
+      >
+        <CoverDecor />
+        <CoverFace
+          moonPhase={tracking && tide ? tide.phaseValue : 0.12}
+          today={today}
+          line={phase ? `${phase} · Day ${tide!.cycleDay}` : undefined}
+          hint={<span className="animate-twinkle text-sm tracking-widest text-gold-500 uppercase group-hover:text-gold-300">✦ Tap to open ✦</span>}
+        />
+      </button>
+      {familiar && <CoverStickers stickers={(familiar.stickers ?? []).filter((s) => s.onCover)} familiar={familiar} mood={mood} />}
+    </div>
+  );
+}
 
-        <span aria-hidden className="relative block size-44 sm:size-52">
-          <span className="absolute inset-3 rounded-full border-4 border-dashed border-gold-900" />
-          {RING.map((s, i) => (
-            <span key={i} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${s.left}%`, top: `${s.top}%` }}>
-              <StarGlyph size={s.big ? 15 : 10} />
-            </span>
-          ))}
-          <span className="absolute inset-0 grid place-items-center">
-            <span className="animate-float">
-              <PixelMoon phase={tracking && tide ? tide.phaseValue : 0.12} variant="tide" size={104} resolution={22} />
-            </span>
-          </span>
-        </span>
+type LockedProps = {
+  today: DateKey;
+  familiar?: Familiar;
+  stickers: Sticker[];
+  /** The combination lock, hung on a strap from the fore-edge. */
+  lock: React.ReactNode;
+  /** True once the lock opens, so the strap drops away with it. */
+  opening: boolean;
+  /** The lock's width and its shackle's height, so the strap can pass through the shackle. */
+  lockWidth: number;
+  shackleHeight: number;
+  /** Messages and "Forgot your code?", shown beside the lock. */
+  notes: React.ReactNode;
+};
 
-        <span className="space-y-1">
-          <span className="block font-journal text-xl text-gold-300">{formatLong(parseKey(today))}</span>
-          {phase && (
-            <span className="block font-journal text-lg text-gold-700">
-              {phase} · Day {tide!.cycleDay}
-            </span>
-          )}
-        </span>
-
-        <span className="animate-twinkle text-sm tracking-widest text-gold-500 uppercase group-hover:text-gold-300">
-          ✦ Tap to open ✦
-        </span>
-      </span>
-
-    </button>
-    {familiar && <CoverStickers stickers={(familiar.stickers ?? []).filter((s) => s.onCover)} familiar={familiar} mood={mood} />}
+/**
+ * The closed grimoire with a PIN set: the same cover, strapped shut with a
+ * crescent-moon lock where the clasp usually is. The moon shows the real sky,
+ * and the familiar a neutral mood, so nothing about your cycle shows.
+ */
+export function LockedCover({ today, familiar, stickers, lock, opening, notes, lockWidth, shackleHeight }: LockedProps) {
+  return (
+    <div className="cover-gilt relative min-h-[85dvh] overflow-hidden text-center" style={LEATHER}>
+      <CoverDecor clasp={false} />
+      <CoverFace moonPhase={skyMoonPhase(parseKey(today))} today={today} compact />
+      {familiar && <CoverStickers stickers={stickers} familiar={familiar} mood="waxing" readOnly />}
+      <div className="absolute right-0 bottom-[5%] left-10 z-30 flex items-end justify-end gap-1">
+        <div className="mb-2 min-w-0 shrink">{notes}</div>
+        <div className="relative shrink-0">
+          {/* The strap: from the fore-edge, through the lock's shackle */}
+          <span
+            aria-hidden
+            className={`absolute left-1/2 z-0 h-10 border-y-4 border-dashed border-gold-900 bg-(--cover-spine) shadow-[0_3px_0_rgb(0_0_0/0.35)] ${opening ? "strap-fall" : ""}`}
+            style={{ top: shackleHeight * 0.45 - 20, width: lockWidth / 2 + 48 }}
+          />
+          <div className="relative z-10">{lock}</div>
+        </div>
+        <span aria-hidden className="w-10 shrink-0" />
+      </div>
     </div>
   );
 }

@@ -50,7 +50,7 @@ type Item = { id: string; x: number; y: number; rot: number; title: string; art:
  * it (it stays where you drop it, on every device); tap one to see what it's for.
  * They sit above the cover rather than inside it, so touching one never opens the book.
  */
-export function CoverStickers({ stickers, familiar, mood }: { stickers: Sticker[]; familiar: Familiar; mood: Mood }) {
+export function CoverStickers({ stickers, familiar, mood, readOnly = false }: { stickers: Sticker[]; familiar: Familiar; mood: Mood; readOnly?: boolean }) {
   const layer = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; moved: boolean } | null>(null);
   const [shown, setShown] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function CoverStickers({ stickers, familiar, mood }: { stickers: Sticker[
   };
 
   return (
-    <div ref={layer} className="pointer-events-none absolute inset-0">
+    <div ref={layer} className="pointer-events-none absolute inset-0" aria-hidden={readOnly || undefined}>
       {items.map((s) => {
         const here = drag?.id === s.id ? drag : s;
         return (
@@ -97,7 +97,7 @@ export function CoverStickers({ stickers, familiar, mood }: { stickers: Sticker[
             role="img"
             aria-label={`Sticker: ${s.title}`}
             title={s.title}
-            className={`pointer-events-auto absolute cursor-grab touch-none select-none ${drag?.id === s.id ? "z-20 cursor-grabbing" : "z-10"}`}
+            className={`${readOnly ? "pointer-events-none" : "pointer-events-auto cursor-grab"} absolute touch-none select-none ${drag?.id === s.id ? "z-20 cursor-grabbing" : "z-10"}`}
             style={{ left: `${here.x}%`, top: `${here.y}%`, transform: `translate(-50%, -50%) rotate(${s.rot}deg) scale(${drag?.id === s.id ? 1.12 : 1})` }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
