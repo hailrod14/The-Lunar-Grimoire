@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePageTurn } from "@/components/pixel/usePageTurn";
 import { BloodDropGlyph } from "@/components/sprites/Glyphs";
-import { PHASE_LABEL, nextTideStart, tideDay, type Phase, type TideDay } from "@/lib/cycle";
+import { PHASE_LABEL, nextTideWindow, tideDay, type Phase, type TideDay } from "@/lib/cycle";
 import { addMonths, dateKey, formatMonth, formatShort, monthGrid, parseKey, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { loggedElements } from "@/lib/grimoire";
@@ -35,8 +35,16 @@ export function tideLines(g: Grimoire, today: DateKey, tide: TideDay | null): st
   if (!tide) return ["Tap “My tide has begun” when it arrives."];
   if (tide.bleeding) return [`Tide flowing · Day ${tide.cycleDay}`];
   if (tide.daysLate > 0) return [`Day ${tide.cycleDay}`, `${tide.daysLate} day${tide.daysLate === 1 ? "" : "s"} late`];
-  const next = nextTideStart(g.tides, g.settings, today);
-  return [`Day ${tide.cycleDay}`, ...(next ? [`Next tide ~${formatShort(parseKey(next))}`] : [])];
+  const tideWindow = nextTideWindow(g.tides, g.settings, today);
+  if (!tideWindow) return [`Day ${tide.cycleDay}`];
+  return [`Day ${tide.cycleDay}`, `Next tide ${formatRange(tideWindow.earliest, tideWindow.latest)}`, `most likely ${formatShort(parseKey(tideWindow.likely))}`];
+}
+
+/** "Oct 15–19" or "Sep 29–Oct 3". */
+export function formatRange(from: DateKey, to: DateKey): string {
+  const a = parseKey(from);
+  const b = parseKey(to);
+  return a.getMonth() === b.getMonth() ? `${formatShort(a)}–${b.getDate()}` : `${formatShort(a)}–${formatShort(b)}`;
 }
 
 export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: DateKey; onOpenDay: (d: DateKey) => void }) {
@@ -47,6 +55,8 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
   const { pageRef, overlay, turn } = usePageTurn();
   const tracking = g.settings.cycleTracking;
   const todayTide = tideDay(today, g.tides, g.settings, today);
+  const tideWindow = nextTideWindow(g.tides, g.settings, today);
+  const possibleTide = (key: DateKey) => Boolean(tideWindow && key > today && key >= tideWindow.earliest && key <= tideWindow.latest);
 
   return (
     <div className="space-y-4">
@@ -99,12 +109,13 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                 const elements = loggedElements(entry);
                 const status = future ? "none" : potionStatus(g, key, entry);
                 const bled = tide?.bleeding || Boolean(entry?.flow);
+                const possible = possibleTide(key);
                 return (
                   <button
                     key={i}
                     type="button"
                     onClick={() => onOpenDay(key)}
-                    aria-label={`${d.toDateString()}${tide ? `, ${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}` : ""}`}
+                    aria-label={`${d.toDateString()}${tide ? `, ${tide.predicted ? "predicted " : ""}${PHASE_LABEL[tide.phase]}` : ""}${possible ? ", tide possible" : ""}`}
                     aria-current={key === today ? "date" : undefined}
                     className={`flex aspect-square flex-col bg-midnight-950 p-1 text-left hover:bg-midnight-700 ${
                       key === today ? "outline-2 outline-gold-300" : ""
@@ -112,7 +123,15 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
                   >
                     <span className="flex items-start justify-between font-journal text-base leading-none">
                       {d.getDate()}
-                      {bled && <BloodDropGlyph size={7} />}
+                      {bled ? (
+                        <BloodDropGlyph size={7} />
+                      ) : (
+                        possible && (
+                          <span className="opacity-40">
+                            <BloodDropGlyph size={7} />
+                          </span>
+                        )
+                      )}
                     </span>
                     <span className="mt-auto flex items-end justify-between">
                       <span className="flex gap-px">
@@ -146,6 +165,14 @@ export function CalendarView({ g, today, onOpenDay }: { g: Grimoire; today: Date
             {tracking && (
               <li className="flex items-center gap-1">
                 <span className="h-1 w-3 bg-tide-waxing opacity-35" /> Predicted
+              </li>
+            )}
+            {tracking && tideWindow && (
+              <li className="flex items-center gap-1">
+                <span className="opacity-40">
+                  <BloodDropGlyph size={7} />
+                </span>{" "}
+                Possible tide
               </li>
             )}
           </ul>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cycleStats, needsEndCheck, nextTideStart, tideDay } from "./cycle";
+import { cycleStats, needsEndCheck, nextTideStart, nextTideWindow, tideDay } from "./cycle";
 import { addDaysKey } from "./dates";
 import { DEFAULT_SETTINGS, type Tide } from "./types";
 
@@ -17,7 +17,7 @@ function tidesWithGaps(first: string, gaps: number[], length = 5): Tide[] {
 describe("cycleStats", () => {
   it("uses the onboarding defaults until three cycles are logged", () => {
     const stats = cycleStats(tidesWithGaps("2026-01-01", [31], 7), settings);
-    expect(stats).toEqual({ cycleLength: 28, periodLength: 5, cyclesLearned: 0, periodsLearned: 0 });
+    expect(stats).toEqual({ cycleLength: 28, periodLength: 5, cyclesLearned: 0, periodsLearned: 0, spread: 3 });
   });
 
   it("learns the average of recent cycles and tides", () => {
@@ -166,5 +166,38 @@ describe("tideDay — a late tide", () => {
   it("moves predictions to start tomorrow", () => {
     expect(nextTideStart(tides, settings, today)).toBe("2026-10-04");
     expect(tideDay("2026-10-04", tides, settings, today)).toMatchObject({ cycleDay: 1, phase: "dark", predicted: true });
+  });
+});
+
+describe("nextTideWindow", () => {
+  it("is ±3 days while still using the onboarding estimate", () => {
+    const tides = [tide("2026-09-01", "2026-09-05")];
+    expect(nextTideWindow(tides, settings, "2026-09-10")).toEqual({
+      earliest: "2026-09-26",
+      likely: "2026-09-29",
+      latest: "2026-10-02",
+      spread: 3,
+    });
+  });
+
+  it("is narrow for regular cycles and wide for irregular ones", () => {
+    const regular = tidesWithGaps("2026-01-01", [28, 28, 29, 28, 28]);
+    expect(cycleStats(regular, settings).spread).toBe(1);
+    const irregular = tidesWithGaps("2026-01-01", [24, 33, 26, 35, 25]);
+    expect(cycleStats(irregular, settings).spread).toBe(4);
+    const wild = tidesWithGaps("2026-01-01", [20, 33, 21, 34, 22, 35]); // no skipped months, just very uneven
+    expect(cycleStats(wild, settings).spread).toBe(7);
+  });
+
+  it("starts tomorrow when the tide is already late", () => {
+    const window = nextTideWindow([tide("2026-09-01", "2026-09-05")], settings, "2026-10-03")!;
+    expect(window.earliest).toBe("2026-10-04");
+    expect(window.likely).toBe("2026-10-04");
+    expect(window.latest).toBe("2026-10-07");
+  });
+
+  it("gives nothing without tides or with tracking off", () => {
+    expect(nextTideWindow([], settings, "2026-09-10")).toBeNull();
+    expect(nextTideWindow([tide("2026-09-01")], { ...settings, cycleTracking: false }, "2026-09-10")).toBeNull();
   });
 });

@@ -40,6 +40,10 @@ const PERIOD_LIMITS = [2, 10] as const;
 /** Gaps outside this range are probably a missed log, not a real cycle. */
 const PLAUSIBLE_CYCLE = [15, 60] as const;
 const PLAUSIBLE_PERIOD = [1, 15] as const;
+/** ± days around a prediction while still using onboarding estimates. */
+const ESTIMATE_SPREAD = 3;
+/** The widest a prediction window gets, however irregular the cycles. */
+const MAX_SPREAD = 7;
 /** Cycles longer than this multiple of the typical one are treated as a skipped tide. */
 const SKIPPED_TIDE_FACTOR = 1.5;
 /** Ask "Has your tide ended?" once an open tide reaches this many days. */
@@ -66,6 +70,8 @@ export type CycleStats = {
   periodLength: number;
   /** How many real cycles the cycle length was learned from (0 = using the default). */
   cyclesLearned: number;
+  /** ± days of uncertainty for predictions: how much recent cycles varied (wider while estimating). */
+  spread: number;
   periodsLearned: number;
 };
 
@@ -89,7 +95,12 @@ export function cycleStats(tides: Tide[], settings: Settings): CycleStats {
   const learnCycle = cycles.length >= MIN_CYCLES_TO_LEARN;
   const learnPeriod = periods.length >= MIN_CYCLES_TO_LEARN;
 
+  // Predictions are as uncertain as the cycles are irregular: about one standard deviation.
+  const deviation = learnCycle ? Math.sqrt(average(cycles.map((n) => (n - average(cycles)) ** 2))) : null;
+  const spread = deviation === null ? ESTIMATE_SPREAD : Math.min(MAX_SPREAD, Math.max(1, Math.round(deviation)));
+
   return {
+    spread,
     cycleLength: learnCycle ? clamp(Math.round(average(cycles)), CYCLE_LIMITS) : settings.defaultCycleLength,
     periodLength: learnPeriod ? clamp(Math.round(average(periods)), PERIOD_LIMITS) : settings.defaultPeriodLength,
     cyclesLearned: learnCycle ? cycles.length : 0,
@@ -214,6 +225,21 @@ export function nextTideStart(tides: Tide[], settings: Settings, today: DateKey)
   const { cycleLength } = cycleStats(tides, settings);
   const expected = addDaysKey(latest.start, cycleLength);
   return expected > today ? expected : addDaysKey(today, 1);
+}
+
+export type TideWindow = { earliest: DateKey; likely: DateKey; latest: DateKey; spread: number };
+
+/**
+ * When the next tide is likely to begin, as a range rather than a single day.
+ * The range never starts in the past: a late tide's window begins tomorrow.
+ */
+export function nextTideWindow(tides: Tide[], settings: Settings, today: DateKey): TideWindow | null {
+  const likely = nextTideStart(tides, settings, today);
+  if (!likely) return null;
+  const { spread } = cycleStats(tides, settings);
+  const tomorrow = addDaysKey(today, 1);
+  const earliest = addDaysKey(likely, -spread);
+  return { earliest: earliest > tomorrow ? earliest : tomorrow, likely, latest: addDaysKey(likely, spread), spread };
 }
 
 /** The tide still flowing on `today`, if one was never ended. */

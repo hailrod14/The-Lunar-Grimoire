@@ -5,8 +5,8 @@ import { BookOpen, HelpCircle, Minus, Plus, X } from "lucide-react";
 import { SparkleBurst } from "@/components/pixel/SparkleBurst";
 import { ElementSprite } from "@/components/sprites/ElementSprite";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
-import { PHASE_MEANING, tideDay } from "@/lib/cycle";
-import { diffKeys, formatHHMM, nowTime, type DateKey } from "@/lib/dates";
+import { PHASE_MEANING, nextTideWindow, tideDay } from "@/lib/cycle";
+import { diffKeys, formatHHMM, formatShort, nowTime, parseKey, type DateKey } from "@/lib/dates";
 import {
   ASPECTS,
   ELEMENTS,
@@ -36,6 +36,7 @@ import { dispatch } from "@/lib/store";
 import { doseLog, dosesOn } from "@/lib/potions";
 import { FLOWS, type DayEntry, type Grimoire, type Potion, type PotionLog } from "@/lib/types";
 import { SkyBadge, TideBadge } from "./Badges";
+import { formatRange } from "./CalendarView";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
 import { SymptomsSection } from "./SymptomsSection";
@@ -56,6 +57,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
   const tide = tideDay(date, g.tides, g.settings, today);
   const day = getDay(g, date);
   const future = date > today;
+  const tideWindow = g.settings.cycleTracking ? nextTideWindow(g.tides, g.settings, today) : null;
 
   return (
     <div className="space-y-4">
@@ -74,6 +76,12 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
       {future ? (
         <p className="pixel-frame p-4 text-center font-journal text-xl text-silver-300">
           This day hasn&apos;t come yet.{tide ? " Its tide is only a prediction." : ""}
+          {tideWindow && date >= tideWindow.earliest && date <= tideWindow.latest && (
+            <span className="mt-2 block text-gold-300">
+              Your next tide may begin around now ({formatRange(tideWindow.earliest, tideWindow.latest)}, most likely{" "}
+              {formatShort(parseKey(tideWindow.likely))}).
+            </span>
+          )}
         </p>
       ) : (
         <>
