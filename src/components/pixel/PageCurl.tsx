@@ -7,7 +7,7 @@ import { curlFrame, type Pt, type TurnDirection } from "@/lib/curl";
 export type PageBack = "paper" | "parchment" | "leather";
 
 const BACKS: Record<PageBack, [string, string]> = {
-  paper: ["#4d45a8", "#141137"], // the back of a midnight page
+  paper: ["var(--paper-back-light)", "var(--paper-back-dark)"], // the back of a page, per theme
   parchment: ["#fffaf0", "#b8955a"],
   leather: ["#7a52c0", "#1b0e2b"], // the cover's violet endpaper
 };

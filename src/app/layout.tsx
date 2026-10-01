@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Pixelify_Sans, VT323 } from "next/font/google";
+import Script from "next/script";
 import { Starfield } from "@/components/pixel/Starfield";
 import "./globals.css";
 
@@ -22,8 +23,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${pixelify.variable} ${vt323.variable}`}>
+    <html lang="en" className={`${pixelify.variable} ${vt323.variable}`} suppressHydrationWarning>
       <body className="antialiased">
+        {/* Apply the last theme before the first paint, so it never flashes Midnight first. */}
+        <Script id="theme" strategy="beforeInteractive">
+          {`try{var t=localStorage.getItem("lunar-grimoire:theme");if(t&&t!=="midnight")document.documentElement.dataset.theme=t}catch(e){}`}
+        </Script>
         <Starfield />
         {children}
       </body>

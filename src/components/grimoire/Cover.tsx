@@ -48,9 +48,9 @@ export function Cover({ tide, tracking, today, onOpen }: Props) {
       type="button"
       onClick={onOpen}
       aria-label="Open the Grimoire"
-      className="group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
+      className="cover-gilt group relative block min-h-[85dvh] w-full overflow-hidden text-center focus-visible:outline-offset-[-8px]"
       style={{
-        backgroundColor: "#2a1740",
+        backgroundColor: "var(--cover-leather)",
         // Leather grain: two faint offset pixel checkers.
         backgroundImage:
           "linear-gradient(45deg, rgb(0 0 0 / 0.14) 25%, transparent 25%, transparent 75%, rgb(0 0 0 / 0.14) 75%)," +
@@ -60,14 +60,14 @@ export function Cover({ tide, tracking, today, onOpen }: Props) {
       }}
     >
       {/* Spine with raised gold bands */}
-      <span aria-hidden className="absolute inset-y-0 left-0 w-5 bg-[#1b0e2b] shadow-[inset_-4px_0_0_rgb(0_0_0/0.35)]">
+      <span aria-hidden className="absolute inset-y-0 left-0 w-5 bg-(--cover-spine) shadow-[inset_-4px_0_0_rgb(0_0_0/0.35)]">
         {[12, 30, 50, 70, 88].map((top) => (
           <span key={top} className="absolute left-0 h-1 w-full bg-gold-700" style={{ top: `${top}%` }} />
         ))}
       </span>
 
       {/* Inset tooled border */}
-      <span aria-hidden className="absolute inset-y-5 right-5 left-9 border-4 border-gold-700 shadow-[inset_0_0_0_4px_#2a1740,inset_0_0_0_8px_rgb(176_122_28/0.45)]" />
+      <span aria-hidden className="absolute inset-y-5 right-5 left-9 border-4 border-gold-700 shadow-[inset_0_0_0_4px_var(--cover-leather),inset_0_0_0_8px_rgb(176_122_28/0.45)]" />
       {CORNERS.map((c) => (
         <span key={c.className} aria-hidden className={`absolute ${c.className} ${c.flip}`}>
           <PixelSprite rows={CORNER} palette={CORNER_PALETTE} size={40} />
@@ -86,9 +86,9 @@ export function Cover({ tide, tracking, today, onOpen }: Props) {
       {/* Strap and clasp across the fore-edge */}
       <span aria-hidden className="absolute top-[80%] right-0 flex -translate-y-1/2 items-center">
         <span className="grid size-7 place-items-center bg-gold-500 shadow-[inset_-4px_-4px_0_#b07a1c,inset_4px_4px_0_#fff4c2]">
-          <span className="size-2.5 bg-[#1b0e2b]" />
+          <span className="size-2.5 bg-(--cover-spine)" />
         </span>
-        <span className="h-10 w-9 border-y-4 border-dashed border-gold-900 bg-[#1b0e2b]" />
+        <span className="h-10 w-9 border-y-4 border-dashed border-gold-900 bg-(--cover-spine)" />
       </span>
 
       <span className="relative flex min-h-[85dvh] flex-col items-center justify-center gap-6 pr-10 pl-14">

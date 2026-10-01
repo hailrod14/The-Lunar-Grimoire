@@ -1,6 +1,7 @@
 import type { DateKey } from "./dates";
 import type { ElementLog, TimeBlock } from "./elements";
 import type { LiquidColor, Vessel } from "./potions";
+import type { Hemisphere, ThemeSetting } from "./theme";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
 export const SCHEMA_VERSION = 3;
@@ -31,6 +32,9 @@ export type Settings = {
   reminderNames: boolean;
   /** With a PIN set: lock after the Grimoire has been out of sight this long (0 = as soon as you leave). */
   autoLockMinutes: number;
+  theme: ThemeSetting;
+  /** Which way the Wheel of the Year turns (sabbats and seasonal themes). */
+  hemisphere: Hemisphere;
   /** When the Grimoire was last exported, as an ISO timestamp ("" = never). */
   lastBackupAt: string;
 };
@@ -107,6 +111,8 @@ export const DEFAULT_SETTINGS: Settings = {
   musicVolume: 0.5,
   reminderNames: false,
   autoLockMinutes: 5,
+  theme: "midnight",
+  hemisphere: "north",
   lastBackupAt: "",
 };
 

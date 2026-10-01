@@ -9,6 +9,7 @@ import { setMusicVolume, startMusic, stopMusic } from "@/lib/music";
 import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
 import { updateSettings } from "@/lib/grimoire";
 import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
+import { applyTheme, resolveTheme } from "@/lib/theme";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useReminderNotifications } from "@/lib/useReminders";
 import { useToday } from "@/lib/useToday";
@@ -57,6 +58,15 @@ export function AppShell() {
   }, [musicOn]);
   useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
   useReminderNotifications(Boolean(open?.grimoire.settings.onboarded));
+
+  // Theme: follows the setting, the device's light/dark mode, or the season.
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+  const themeSetting = open?.grimoire.settings.theme;
+  const hemisphere = open?.grimoire.settings.hemisphere ?? "north";
+  useEffect(() => {
+    if (!themeSetting || !today) return; // While locked, keep the theme from last time.
+    applyTheme(resolveTheme(themeSetting, prefersDark, today, hemisphere));
+  }, [themeSetting, prefersDark, today, hemisphere]);
 
   if (!state || !today) return <Loading />;
   if (state.status === "locked") return <LockScreen />;

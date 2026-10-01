@@ -6,6 +6,7 @@ import type { DateKey } from "@/lib/dates";
 import { Play } from "lucide-react";
 import { updateSettings } from "@/lib/grimoire";
 import { playPageTurn } from "@/lib/sound";
+import { THEMES } from "@/lib/theme";
 import { isAppleMobile, isInstalled, promptInstall, useCanInstall } from "@/lib/pwa";
 import { dispatch, eraseEverything } from "@/lib/store";
 import type { Grimoire } from "@/lib/types";
@@ -40,6 +41,7 @@ export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
       <RemindersSettings g={g} today={today} />
       <Backups g={g} today={today} />
       <PinSettings g={g} />
+      <ThemePicker g={g} />
       <SoundAndMusic g={g} />
       <Install />
 
@@ -90,6 +92,44 @@ function Rhythm({ g }: { g: Grimoire }) {
         <Stepper label="Estimated cycle length" value={g.settings.defaultCycleLength} min={21} max={45} unit="days" onChange={(n) => set({ defaultCycleLength: n })} />
         <p className="text-sm text-silver-300">Estimated tide length</p>
         <Stepper label="Estimated tide length" value={g.settings.defaultPeriodLength} min={2} max={10} unit="days" onChange={(n) => set({ defaultPeriodLength: n })} />
+      </div>
+    </Section>
+  );
+}
+
+function ThemePicker({ g }: { g: Grimoire }) {
+  const set = (patch: Parameters<typeof updateSettings>[1]) => dispatch((x) => updateSettings(x, patch));
+  return (
+    <Section title="Theme">
+      <div className="grid grid-cols-2 gap-2">
+        {THEMES.map((t) => {
+          const on = g.settings.theme === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => set({ theme: t.id })}
+              className={`space-y-1 p-2 text-left ${on ? "bg-midnight-600 outline-2 outline-gold-300" : "bg-midnight-950 hover:bg-midnight-700"}`}
+            >
+              <span aria-hidden className="flex h-5">
+                {t.swatch.map((c) => (
+                  <span key={c} className="flex-1" style={{ background: c }} />
+                ))}
+              </span>
+              <span className="block text-sm leading-tight text-silver-100">{t.name}</span>
+              <span className="block font-journal text-base leading-tight text-silver-500">{t.note}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="pt-1 text-sm text-silver-300">Hemisphere (for the seasons and the Wheel of the Year)</p>
+      <div className="grid grid-cols-2 gap-1">
+        {(["north", "south"] as const).map((h) => (
+          <Choice key={h} selected={g.settings.hemisphere === h} onClick={() => set({ hemisphere: h })}>
+            {h === "north" ? "Northern" : "Southern"}
+          </Choice>
+        ))}
       </div>
     </Section>
   );

@@ -3,6 +3,7 @@ import { isDateKey } from "./dates";
 import { ASPECTS, ELEMENTS, TIME_BLOCKS, type ElementLog } from "./elements";
 import { LIQUID_COLORS, VESSELS } from "./potions";
 import { BUILT_IN_SYMPTOMS } from "./symptoms";
+import { THEMES } from "./theme";
 import {
   DEFAULT_SETTINGS,
   FLOWS,
@@ -51,6 +52,8 @@ function sanitizeSettings(v: unknown): Settings {
       typeof s.musicVolume === "number" && s.musicVolume >= 0 && s.musicVolume <= 1 ? s.musicVolume : DEFAULT_SETTINGS.musicVolume,
     reminderNames: s.reminderNames === true,
     autoLockMinutes: numberIn(s.autoLockMinutes, 0, 60, DEFAULT_SETTINGS.autoLockMinutes),
+    theme: oneOf(s.theme, THEMES.map((t) => t.id)) ? s.theme : DEFAULT_SETTINGS.theme,
+    hemisphere: s.hemisphere === "south" ? "south" : "north",
     lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
   };
 }

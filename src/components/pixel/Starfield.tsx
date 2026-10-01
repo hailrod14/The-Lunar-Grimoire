@@ -23,7 +23,7 @@ const STARS = Array.from({ length: 70 }, (_, i) => ({
 /** A fixed, pixel starfield behind every page. */
 export function Starfield() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" style={{ opacity: "var(--starfield-opacity)" }}>
       {STARS.map((s) => (
         <span
           key={s.id}

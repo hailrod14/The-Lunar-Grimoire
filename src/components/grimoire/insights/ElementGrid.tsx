@@ -7,8 +7,8 @@ import type { Insights } from "@/lib/insights";
 import { PHASE_BG } from "../CalendarView";
 import { useChartTip } from "./useChartTip";
 
-/** One hue (gold), dim → bright as a phase leans more on an element. */
-const RAMP = ["#241f4a", "#4a3517", "#7a561a", "#b07a1c", "#e0a232", "#ffd866"];
+/** One hue (gold) from the theme's ramp: step 0 is "not felt", then less → more. */
+const RAMP = [0, 1, 2, 3, 4, 5].map((n) => `var(--heat-${n})`);
 const step = (share: number) => (share === 0 ? 0 : Math.min(5, 1 + Math.floor(share * 5)));
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
@@ -78,7 +78,7 @@ export function ElementGrid({ rows }: { rows: Insights["elements"]["rows"] }) {
                       {...bind(`${ELEMENT_INFO[cell.element].name}: ${pct(cell.share)}`, detail)}
                       aria-label={`${ELEMENT_INFO[cell.element].name} in ${PHASE_LABEL[row.phase]}: ${pct(cell.share)}, ${detail}`}
                       className="grid h-11 w-full place-items-center font-journal text-lg hover:outline-2 hover:outline-silver-100 focus-visible:outline-offset-0"
-                      style={{ background: RAMP[s], color: s >= 4 ? "var(--color-midnight-950)" : "var(--color-silver-100)" }}
+                      style={{ background: RAMP[s], color: s >= 4 ? "var(--heat-ink-bright)" : "var(--heat-ink-dim)" }}
                     >
                       {cell.count ? pct(cell.share) : "·"}
                     </button>

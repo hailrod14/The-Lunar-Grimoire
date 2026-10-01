@@ -9,15 +9,15 @@ export type View = "calendar" | "day" | "journal" | "cabinet" | "insights" | "se
 export const RIBBON_ORDER: View[] = ["calendar", "day", "journal", "cabinet", "insights", "settings"];
 
 const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[] = [
-  { view: "calendar", label: "Calendar", bg: "bg-violet-500", icon: <CalendarDays size={18} strokeWidth={2.5} /> },
-  { view: "day", label: "Today", bg: "bg-gold-500", icon: <PixelMoon phase={0.2} variant="tide" size={18} resolution={10} /> },
-  { view: "journal", label: "Journal", bg: "bg-parchment-300", icon: <BookOpen size={18} strokeWidth={2.5} /> },
+  { view: "calendar", label: "Calendar", bg: "bg-[#6b44b8]", icon: <CalendarDays size={18} strokeWidth={2.5} /> },
+  { view: "day", label: "Today", bg: "bg-[#f2b33d]", icon: <PixelMoon phase={0.2} variant="tide" size={18} resolution={10} /> },
+  { view: "journal", label: "Journal", bg: "bg-[#e6cfa0]", icon: <BookOpen size={18} strokeWidth={2.5} /> },
   { view: "cabinet", label: "Cabinet", bg: "bg-[#2fbfa8]", icon: <VesselSprite vessel="flask" color="violet" size={18} /> },
-  { view: "insights", label: "Insights", bg: "bg-violet-300", icon: <CrystalBallGlyph size={18} /> },
-  { view: "settings", label: "Settings", bg: "bg-silver-300", icon: <Settings size={18} strokeWidth={2.5} /> },
+  { view: "insights", label: "Insights", bg: "bg-[#a88ef0]", icon: <CrystalBallGlyph size={18} /> },
+  { view: "settings", label: "Settings", bg: "bg-[#c3cfea]", icon: <Settings size={18} strokeWidth={2.5} /> },
 ];
 
-/** Bookmark ribbons hanging off the right edge of the book. */
+/** Bookmark ribbons hanging off the right edge of the book. Like real ribbons, they keep their colors in every theme. */
 type Props = {
   active: View | null;
   dayLabel: string;
@@ -43,7 +43,7 @@ export function Ribbons({ active, dayLabel, onSelect, hide = [], music, onClose 
             onClick={() => onSelect(r.view)}
             aria-current={isActive ? "page" : undefined}
             aria-label={label}
-            className={`${r.bg} flex flex-col items-center gap-1.5 pt-2 pr-2 pb-3.5 pl-1 text-midnight-950 transition-[width] duration-100 ${
+            className={`${r.bg} flex flex-col items-center gap-1.5 pt-2 pr-2 pb-3.5 pl-1 text-[#0a0924] transition-[width] duration-100 ${
               isActive ? "w-12 brightness-110" : "w-9 opacity-75 hover:w-10 hover:opacity-100"
             }`}
             style={{

@@ -77,6 +77,139 @@
 :root {
   --px: 4px; /* one "pixel" of UI chrome */
   color-scheme: dark;
+
+  /* Theme-aware colors that aren't part of the Tailwind palette */
+  --cover-leather: #2a1740;
+  --cover-spine: #1b0e2b;
+  --paper-back-light: #4d45a8;
+  --paper-back-dark: #141137;
+  --starfield-opacity: 1;
+  /* Insight heat-map: one hue, "none" first, then less → more */
+  --heat-0: #241f4a;
+  --heat-1: #4a3517;
+  --heat-2: #7a561a;
+  --heat-3: #b07a1c;
+  --heat-4: #e0a232;
+  --heat-5: #ffd866;
+  --heat-ink-dim: var(--color-silver-100);
+  --heat-ink-bright: #0a0924;
+}
+
+/* The cover keeps its gilt and leather look in every theme. */
+.cover-gilt {
+  --color-gold-100: #fff4c2;
+  --color-gold-300: #ffd866;
+  --color-gold-500: #f2b33d;
+  --color-gold-700: #b07a1c;
+  --color-gold-900: #5c3d0c;
+  --color-midnight-950: #0a0924;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Themes — each redefines the palette tokens, so every component follows
+   ───────────────────────────────────────────────────────────── */
+
+/* Parchment: a light, daytime grimoire */
+:root[data-theme="parchment"] {
+  color-scheme: light;
+  --color-void: #e3d3b0;
+  --color-midnight-950: #ebdec0;
+  --color-midnight-900: #efe4cb;
+  --color-midnight-800: #f8f0de;
+  --color-midnight-700: #e4d5b3;
+  --color-midnight-600: #dac8a0;
+  --color-violet-900: #ead9f0;
+  --color-violet-700: #8a68c9;
+  --color-violet-500: #6b44b8;
+  --color-violet-300: #5b3aa0;
+  --color-violet-100: #fbf8ff;
+  --color-gold-100: #6b470e;
+  --color-gold-300: #8a5a08;
+  --color-gold-500: #9a6a12;
+  --color-gold-700: #8a5a08;
+  --color-gold-900: #dcc08a;
+  --color-silver-100: #2b1d12;
+  --color-silver-300: #4a3826;
+  --color-silver-500: #6e5a42;
+  --color-silver-700: #9b8668;
+  --color-air: #5d74c9;
+  --color-tide-full: #d4a52c;
+  --cover-leather: #6b3f1f;
+  --cover-spine: #4a2a12;
+  --paper-back-light: #fffaf0;
+  --paper-back-dark: #c9a86a;
+  --starfield-opacity: 0.35;
+  --heat-0: #efe4cb;
+  --heat-1: #f3dfa6;
+  --heat-2: #e8c46a;
+  --heat-3: #c9962e;
+  --heat-4: #9a6a12;
+  --heat-5: #6b470e;
+  --heat-ink-dim: #2b1d12;
+  --heat-ink-bright: #fbf6ea;
+}
+
+/* On light paper, titles get a soft pressed shadow instead of the night-sky glow. */
+:root[data-theme="parchment"] .pixel-title {
+  text-shadow: 0 2px 0 rgb(107 71 14 / 0.18);
+}
+
+/* Enchanted Forest: moss, pine, and honey */
+:root[data-theme="forest"] {
+  --color-void: #040c07;
+  --color-midnight-950: #08140d;
+  --color-midnight-900: #0c1c12;
+  --color-midnight-800: #13281a;
+  --color-midnight-700: #1c3825;
+  --color-midnight-600: #27492f;
+  --color-violet-900: #183020;
+  --color-violet-700: #2c5a3a;
+  --color-violet-500: #4f8a5b;
+  --color-violet-300: #9fd0a3;
+  --color-violet-100: #e2f5e0;
+  --color-silver-100: #eaf2e3;
+  --color-silver-300: #c5d6bd;
+  --color-silver-500: #8ea888;
+  --color-silver-700: #5a7356;
+  --cover-leather: #1f3a24;
+  --cover-spine: #12261a;
+  --paper-back-light: #3f7a4b;
+  --paper-back-dark: #0c1c12;
+  --heat-0: #1b3322;
+}
+
+/* Rose Quartz: plum velvet and rose gold */
+:root[data-theme="rose"] {
+  --color-void: #12060c;
+  --color-midnight-950: #1a0912;
+  --color-midnight-900: #230d18;
+  --color-midnight-800: #321324;
+  --color-midnight-700: #431a31;
+  --color-midnight-600: #57233f;
+  --color-violet-900: #3a1426;
+  --color-violet-700: #6e2a4c;
+  --color-violet-500: #c0577f;
+  --color-violet-300: #f0a6c2;
+  --color-violet-100: #ffe6ef;
+  --color-gold-100: #fff0e6;
+  --color-gold-300: #f6c7a7;
+  --color-gold-500: #e0957a;
+  --color-gold-700: #a85f4a;
+  --color-gold-900: #5a2e25;
+  --color-silver-100: #fbeef2;
+  --color-silver-300: #e6c8d2;
+  --color-silver-500: #b38f9c;
+  --color-silver-700: #7d5966;
+  --cover-leather: #4a1832;
+  --cover-spine: #2a0c1c;
+  --paper-back-light: #9a4a72;
+  --paper-back-dark: #2a0c1c;
+  --heat-0: #3a1728;
+  --heat-1: #5a2e25;
+  --heat-2: #7f4436;
+  --heat-3: #a85f4a;
+  --heat-4: #e0957a;
+  --heat-5: #f6c7a7;
 }
 
 html {
