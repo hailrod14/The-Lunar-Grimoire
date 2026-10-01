@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cycleStats, MIN_CYCLES_TO_LEARN } from "@/lib/cycle";
 import type { DateKey } from "@/lib/dates";
-import { Play } from "lucide-react";
+import { FileText, Play } from "lucide-react";
 import { updateSettings } from "@/lib/grimoire";
 import { playPageTurn } from "@/lib/sound";
 import { THEMES } from "@/lib/theme";
@@ -17,7 +17,7 @@ import { RemindersSettings } from "./RemindersSettings";
 import { Section } from "./Section";
 import { TideHistory } from "./TideHistory";
 
-export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
+export function SettingsView({ g, today, onOpenSummary }: { g: Grimoire; today: DateKey; onOpenSummary: () => void }) {
   const tracking = g.settings.cycleTracking;
 
   return (
@@ -39,6 +39,14 @@ export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
       {tracking && <Rhythm g={g} />}
       {tracking && <TideHistory g={g} today={today} />}
       <RemindersSettings g={g} today={today} />
+      <Section title="Doctor-visit summary">
+        <p className="font-journal text-lg text-silver-300">
+          A plain, printable report of your periods, symptoms, and medications, ready to save as a PDF. Your journal is never included.
+        </p>
+        <button type="button" onClick={onOpenSummary} className="pixel-button pixel-button--gold">
+          <FileText size={16} /> Make a summary
+        </button>
+      </Section>
       <Backups g={g} today={today} />
       <PinSettings g={g} />
       <ThemePicker g={g} />

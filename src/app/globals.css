@@ -400,3 +400,32 @@ svg[shape-rendering="crispEdges"],
     transition-duration: 1ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Printing — only the visit summary prints, in black on white
+   ───────────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .print-sheet table {
+    break-inside: auto;
+  }
+  .print-sheet tr,
+  .print-sheet section {
+    break-inside: avoid;
+  }
+}

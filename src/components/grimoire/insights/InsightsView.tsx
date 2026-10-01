@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText } from "lucide-react";
 import { CrystalBallGlyph } from "@/components/sprites/Glyphs";
 import { PHASE_LABEL } from "@/lib/cycle";
 import type { DateKey } from "@/lib/dates";
@@ -16,7 +17,7 @@ function Clouded({ children }: { children: React.ReactNode }) {
 }
 
 /** The Scrying Glass: patterns across your tides, elements, symptoms, and potions. */
-export function InsightsView({ g, today }: { g: Grimoire; today: DateKey }) {
+export function InsightsView({ g, today, onOpenSummary }: { g: Grimoire; today: DateKey; onOpenSummary: () => void }) {
   const insights = computeInsights(g, today);
   const tracking = g.settings.cycleTracking;
   const { elements, symptoms, cycles, potions } = insights;
@@ -95,6 +96,10 @@ export function InsightsView({ g, today }: { g: Grimoire; today: DateKey }) {
           <Clouded>Check off your daily potions and your consistency will show here.</Clouded>
         )}
       </Section>
+
+      <button type="button" onClick={onOpenSummary} className="pixel-button pixel-button--gold w-full">
+        <FileText size={16} /> Make a summary for a doctor visit
+      </button>
 
       {!tracking && (
         <p className="px-2 font-journal text-lg text-silver-500">

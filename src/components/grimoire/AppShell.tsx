@@ -23,6 +23,7 @@ import { DayView } from "./DayView";
 import { InsightsView } from "./insights/InsightsView";
 import { JournalView } from "./JournalView";
 import { SettingsView } from "./SettingsView";
+import { VisitSummary } from "./VisitSummary";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
 
 /** Wide enough to lay the book open as two pages side by side. */
@@ -104,6 +105,7 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
   const [selected, setSelected] = useState<DateKey>(today);
   // The book opens closed, on its cover; the calendar is the first page.
   const [coverOpen, setCoverOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const { pageRef, overlay, turn } = usePageTurn();
   // Wide screens lay the book open flat: the calendar on the left page, everything else on the right.
   const spread = useMediaQuery(SPREAD_QUERY);
@@ -168,8 +170,8 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
       )}
       {v === "journal" && <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />}
       {v === "cabinet" && <CabinetView g={g} />}
-      {v === "insights" && <InsightsView g={g} today={today} />}
-      {v === "settings" && <SettingsView g={g} today={today} />}
+      {v === "insights" && <InsightsView g={g} today={today} onOpenSummary={() => setSummaryOpen(true)} />}
+      {v === "settings" && <SettingsView g={g} today={today} onOpenSummary={() => setSummaryOpen(true)} />}
     </>
   );
 
@@ -205,6 +207,19 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
       {overlay}
     </div>
   );
+
+  if (summaryOpen) {
+    return (
+      <VisitSummary
+        g={g}
+        today={today}
+        onClose={() => {
+          setSummaryOpen(false);
+          window.scrollTo({ top: 0 });
+        }}
+      />
+    );
+  }
 
   if (spread && coverOpen) {
     return (
