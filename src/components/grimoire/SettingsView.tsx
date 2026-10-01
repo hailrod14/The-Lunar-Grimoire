@@ -7,10 +7,12 @@ import { Play } from "lucide-react";
 import { updateSettings } from "@/lib/grimoire";
 import { playPageTurn } from "@/lib/sound";
 import { isAppleMobile, isInstalled, promptInstall, useCanInstall } from "@/lib/pwa";
-import { dispatch, replaceGrimoire } from "@/lib/store";
-import { newGrimoire, type Grimoire } from "@/lib/types";
+import { dispatch, eraseEverything } from "@/lib/store";
+import type { Grimoire } from "@/lib/types";
 import { Backups } from "./Backups";
 import { Choice, Stepper } from "./Controls";
+import { PinSettings } from "./PinSettings";
+import { RemindersSettings } from "./RemindersSettings";
 import { Section } from "./Section";
 import { TideHistory } from "./TideHistory";
 
@@ -35,7 +37,9 @@ export function SettingsView({ g, today }: { g: Grimoire; today: DateKey }) {
 
       {tracking && <Rhythm g={g} />}
       {tracking && <TideHistory g={g} today={today} />}
+      <RemindersSettings g={g} today={today} />
       <Backups g={g} today={today} />
+      <PinSettings g={g} />
       <SoundAndMusic g={g} />
       <Install />
 
@@ -181,11 +185,11 @@ function StartOver() {
       {confirming ? (
         <>
           <p className="font-journal text-lg text-gold-300">
-            This permanently erases every tide, potion, and page in this browser. It can&apos;t be undone. Export a backup first if you
+            This permanently erases every tide, potion, and page in this browser, and removes any PIN. It can&apos;t be undone. Export a backup first if you
             might want it back.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => replaceGrimoire(newGrimoire())} className="bg-blood px-3 py-2 text-white">
+            <button type="button" onClick={() => void eraseEverything()} className="bg-blood px-3 py-2 text-white">
               Yes, erase everything
             </button>
             <button type="button" onClick={() => setConfirming(false)} className="pixel-button pixel-button--ghost">

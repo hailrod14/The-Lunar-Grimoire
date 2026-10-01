@@ -2,7 +2,7 @@
 // device so it opens and works offline. Your data is never touched here —
 // it lives in localStorage, not in this cache.
 
-const CACHE = "lunar-grimoire-v3";
+const CACHE = "lunar-grimoire-v4";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -60,6 +60,19 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached ?? Response.error());
       return cached ?? network;
+    })(),
+  );
+});
+
+// Tapping a potion reminder brings the Grimoire forward (or opens it).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((w) => w.url.startsWith(self.registration.scope));
+      if (open) return open.focus();
+      return self.clients.openWindow(self.registration.scope);
     })(),
   );
 });

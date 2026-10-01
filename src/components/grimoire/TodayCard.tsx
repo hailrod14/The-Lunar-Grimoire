@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { END_CHECK_DAYS, needsEndCheck, openTide, type TideDay } from "@/lib/cycle";
-import { addDaysKey, diffKeys, type DateKey } from "@/lib/dates";
+import { addDaysKey, diffKeys, formatHHMM, type DateKey } from "@/lib/dates";
 import { ELEMENT_INFO } from "@/lib/elements";
 import { beginTide, endTide, getDay, loggedElements, reopenTide, setFlow, tideAt } from "@/lib/grimoire";
 import { dispatch } from "@/lib/store";
+import { dueReminders } from "@/lib/reminders";
 import { FLOWS, type Grimoire } from "@/lib/types";
+import { useNow } from "@/lib/useNow";
 import { Section } from "./Section";
 
 /** After this many days late, add a gentle note that it may be worth checking in with someone. */
@@ -14,6 +16,8 @@ const LONG_LATE_DAYS = 21;
 
 export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today: DateKey; tide: TideDay | null; onOpenToday: () => void }) {
   const [endCheckDismissed, setEndCheckDismissed] = useState(false);
+  const now = useNow();
+  const awaiting = now ? dueReminders(g, today, now) : [];
   const [endDate, setEndDate] = useState(() => addDaysKey(today, -1));
   const day = getDay(g, today);
   const daily = g.potions.filter((p) => p.schedule === "daily" && !p.archived);
@@ -29,6 +33,14 @@ export function TodayCard({ g, today, tide, onOpenToday }: { g: Grimoire; today:
 
   return (
     <div className="space-y-3">
+      {awaiting.length > 0 && (
+        <button type="button" onClick={onOpenToday} className="pixel-frame pixel-frame--gold block w-full p-3 text-left">
+          <span className="block text-gold-300">⏰ Awaiting you</span>
+          <span className="block font-journal text-lg text-silver-100">
+            {awaiting.map((p) => `${p.name} (${formatHHMM(p.time)})`).join(" · ")}
+          </span>
+        </button>
+      )}
       {tracking && open && needsEndCheck(g.tides, today) && !endCheckDismissed && (
         <Section title="Has your tide ended?" className="pixel-frame--gold">
           <p className="font-journal text-lg text-silver-300">It&apos;s been flowing for {openDays} days. When was its last day?</p>

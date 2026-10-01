@@ -3,7 +3,7 @@ import type { ElementLog, TimeBlock } from "./elements";
 import type { LiquidColor, Vessel } from "./potions";
 
 /** Bump when the saved shape changes, and add a migration in storage.ts. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type Flow = "spotting" | "light" | "medium" | "heavy" | "clots";
 
@@ -27,6 +27,10 @@ export type Settings = {
   musicEnabled: boolean;
   /** Music volume from 0 to 1. */
   musicVolume: number;
+  /** Show potion names in reminders. Off by default so nothing shows on a lock screen. */
+  reminderNames: boolean;
+  /** With a PIN set: lock after the Grimoire has been out of sight this long (0 = as soon as you leave). */
+  autoLockMinutes: number;
   /** When the Grimoire was last exported, as an ISO timestamp ("" = never). */
   lastBackupAt: string;
 };
@@ -45,6 +49,8 @@ export type Potion = {
   schedule: "daily" | "as-needed";
   /** Retired potions leave the checklist but keep their history. */
   archived: boolean;
+  /** Remind at `time` each day (daily potions only). */
+  reminder: boolean;
 };
 
 /** A dose taken. Name and dose are copied so later edits never rewrite history. */
@@ -59,11 +65,20 @@ export type PotionLog = {
   extra: boolean;
 };
 
+export type SymptomSeverity = 1 | 2 | 3;
+
+/** A symptom felt on a day: a built-in id (e.g. "cramps") or a custom symptom's id. */
+export type SymptomLog = { id: string; severity: SymptomSeverity };
+
+/** A symptom someone added for themselves. Retired ones stay in history. */
+export type CustomSymptom = { id: string; name: string; archived: boolean };
+
 export type DayEntry = {
   flow?: Flow;
   elements: Record<TimeBlock, ElementLog[]>;
   journal: string;
   potionLogs: PotionLog[];
+  symptoms: SymptomLog[];
 };
 
 export type Grimoire = {
@@ -71,6 +86,7 @@ export type Grimoire = {
   settings: Settings;
   tides: Tide[];
   potions: Potion[];
+  customSymptoms: CustomSymptom[];
   days: Record<DateKey, DayEntry>;
 };
 
@@ -82,6 +98,8 @@ export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   musicEnabled: false,
   musicVolume: 0.5,
+  reminderNames: false,
+  autoLockMinutes: 5,
   lastBackupAt: "",
 };
 
@@ -89,6 +107,7 @@ export const emptyDay = (): DayEntry => ({
   elements: { morning: [], afternoon: [], night: [] },
   journal: "",
   potionLogs: [],
+  symptoms: [],
 });
 
 export const newGrimoire = (): Grimoire => ({
@@ -96,5 +115,6 @@ export const newGrimoire = (): Grimoire => ({
   settings: { ...DEFAULT_SETTINGS },
   tides: [],
   potions: [],
+  customSymptoms: [],
   days: {},
 });

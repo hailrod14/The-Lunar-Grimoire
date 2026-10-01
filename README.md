@@ -183,11 +183,11 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Settings, tide history editing, Export / Import, PWA install, and offline support
 - [x] Polish: curling page-corner turns, page-turn sound (with a mute switch), desktop two-page spread
 
-**Phase 2: Ideas**
-- [ ] Optional PIN lock screen
-- [ ] Symptom tracking (cramps, headaches, cravings, and more)
-- [ ] Element and cycle pattern insights
-- [ ] Optional potion reminders
+**Phase 2**
+- [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock
+- [x] Symptom tracking (built-in and your own, mild / moderate / strong)
+- [x] The Scrying Glass: elements and symptoms by tide phase, cycle history, potion consistency
+- [x] Potion reminders: notifications while open, plus an "Add to my calendar" file for reliable alarms
 
 ---
 

@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   activePotions,
+  addCustomSymptom,
   addDose,
   addTide,
+  retireCustomSymptom,
+  setSymptom,
   archivePotion,
   deletePotion,
   potionHasHistory,
@@ -26,6 +29,7 @@ const potion: Omit<Potion, "id"> = {
   color: "rose",
   schedule: "daily",
   archived: false,
+  reminder: false,
 };
 
 const withPotion = (): [Grimoire, string] => {
@@ -157,6 +161,31 @@ describe("potions", () => {
     const g = newGrimoire();
     expect(togglePotion(g, "2026-09-30", "missing", "09:00")).toBe(g);
     expect(addDose(g, "2026-09-30", "missing", "09:00")).toBe(g);
+  });
+});
+
+describe("symptoms", () => {
+  it("sets, changes, and clears a symptom without reordering others", () => {
+    let g = setSymptom(newGrimoire(), "2026-09-30", "cramps", 2);
+    g = setSymptom(g, "2026-09-30", "headache", 1);
+    g = setSymptom(g, "2026-09-30", "cramps", 3);
+    expect(getDay(g, "2026-09-30").symptoms).toEqual([
+      { id: "cramps", severity: 3 },
+      { id: "headache", severity: 1 },
+    ]);
+    g = setSymptom(g, "2026-09-30", "cramps", 0);
+    expect(getDay(g, "2026-09-30").symptoms).toEqual([{ id: "headache", severity: 1 }]);
+  });
+
+  it("adds custom symptoms once, and brings back a retired one by name", () => {
+    let g = addCustomSymptom(newGrimoire(), " Dizzy ");
+    expect(addCustomSymptom(g, "dizzy")).toBe(g);
+    const id = g.customSymptoms[0].id;
+    g = retireCustomSymptom(g, id);
+    expect(g.customSymptoms[0].archived).toBe(true);
+    g = addCustomSymptom(g, "Dizzy");
+    expect(g.customSymptoms).toEqual([{ id, name: "Dizzy", archived: false }]);
+    expect(addCustomSymptom(g, "   ")).toBe(g);
   });
 });
 

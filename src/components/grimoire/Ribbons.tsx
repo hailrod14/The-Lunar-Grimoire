@@ -1,17 +1,19 @@
 import { BookOpen, CalendarDays, Music, Settings } from "lucide-react";
 import { PixelMoon } from "@/components/sprites/PixelMoon";
+import { CrystalBallGlyph } from "@/components/sprites/Glyphs";
 import { VesselSprite } from "@/components/sprites/VesselSprite";
 
-export type View = "calendar" | "day" | "journal" | "cabinet" | "settings";
+export type View = "calendar" | "day" | "journal" | "cabinet" | "insights" | "settings";
 
 /** Top-to-bottom ribbon order, which decides the page-turn direction. */
-export const RIBBON_ORDER: View[] = ["calendar", "day", "journal", "cabinet", "settings"];
+export const RIBBON_ORDER: View[] = ["calendar", "day", "journal", "cabinet", "insights", "settings"];
 
 const RIBBONS: { view: View; label: string; bg: string; icon: React.ReactNode }[] = [
   { view: "calendar", label: "Calendar", bg: "bg-violet-500", icon: <CalendarDays size={18} strokeWidth={2.5} /> },
   { view: "day", label: "Today", bg: "bg-gold-500", icon: <PixelMoon phase={0.2} variant="tide" size={18} resolution={10} /> },
   { view: "journal", label: "Journal", bg: "bg-parchment-300", icon: <BookOpen size={18} strokeWidth={2.5} /> },
   { view: "cabinet", label: "Cabinet", bg: "bg-[#2fbfa8]", icon: <VesselSprite vessel="flask" color="violet" size={18} /> },
+  { view: "insights", label: "Insights", bg: "bg-violet-300", icon: <CrystalBallGlyph size={18} /> },
   { view: "settings", label: "Settings", bg: "bg-silver-300", icon: <Settings size={18} strokeWidth={2.5} /> },
 ];
 

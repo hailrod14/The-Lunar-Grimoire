@@ -5,7 +5,7 @@ import { Download, Upload } from "lucide-react";
 import { dateKey, diffKeys, type DateKey } from "@/lib/dates";
 import { updateSettings } from "@/lib/grimoire";
 import { exportGrimoire, parseGrimoireFile } from "@/lib/storage";
-import { dispatch, replaceGrimoire } from "@/lib/store";
+import { dispatch, replaceGrimoire, useGrimoireState } from "@/lib/store";
 import type { Grimoire } from "@/lib/types";
 import { Section } from "./Section";
 
@@ -25,6 +25,8 @@ type Pending = { grimoire: Grimoire; exportedAt?: string };
 
 export function Backups({ g, today }: { g: Grimoire; today: DateKey }) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const state = useGrimoireState();
+  const pinSet = state?.status === "open" && state.pinSet;
   const [pending, setPending] = useState<Pending | null>(null);
   const [message, setMessage] = useState<{ tone: "good" | "bad"; text: string } | null>(null);
 
@@ -97,6 +99,12 @@ export function Backups({ g, today }: { g: Grimoire; today: DateKey }) {
           }}
         />
       </div>
+
+      {pinSet && (
+        <p className="font-journal text-base text-silver-500">
+          Backup files aren&apos;t protected by your PIN. Keep them somewhere private.
+        </p>
+      )}
 
       {message && (
         <p role="status" className={`font-journal text-lg ${message.tone === "good" ? "text-earth" : "text-fire"}`}>

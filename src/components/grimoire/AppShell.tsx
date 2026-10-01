@@ -10,13 +10,16 @@ import { listenForInstallPrompt, registerServiceWorker } from "@/lib/pwa";
 import { updateSettings } from "@/lib/grimoire";
 import { dismissLoadProblem, dispatch, useGrimoireState } from "@/lib/store";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { useReminderNotifications } from "@/lib/useReminders";
 import { useToday } from "@/lib/useToday";
 import type { Grimoire } from "@/lib/types";
 import { CalendarView } from "./CalendarView";
 import { Cover } from "./Cover";
+import { LockScreen } from "./LockScreen";
 import { Onboarding } from "./Onboarding";
 import { CabinetView } from "./CabinetView";
 import { DayView } from "./DayView";
+import { InsightsView } from "./insights/InsightsView";
 import { JournalView } from "./JournalView";
 import { SettingsView } from "./SettingsView";
 import { RIBBON_ORDER, Ribbons, type View } from "./Ribbons";
@@ -43,16 +46,20 @@ export function AppShell() {
   const state = useGrimoireState();
   const today = useToday();
 
-  // Music follows the setting; it starts on the next tap, as browsers require.
-  const musicOn = state?.grimoire.settings.musicEnabled ?? false;
-  const musicVolume = state?.grimoire.settings.musicVolume ?? 0.5;
+  const open = state?.status === "open" ? state : null;
+
+  // Music follows the setting (and stops while locked); it starts on the next tap, as browsers require.
+  const musicOn = open?.grimoire.settings.musicEnabled ?? false;
+  const musicVolume = open?.grimoire.settings.musicVolume ?? 0.5;
   useEffect(() => {
     if (musicOn) startMusic();
     else stopMusic();
   }, [musicOn]);
   useEffect(() => setMusicVolume(musicVolume), [musicVolume]);
+  useReminderNotifications(Boolean(open?.grimoire.settings.onboarded));
 
   if (!state || !today) return <Loading />;
+  if (state.status === "locked") return <LockScreen />;
   if (!state.grimoire.settings.onboarded) return <Onboarding today={today} />;
   return (
     <>
@@ -138,6 +145,7 @@ function Book({ g, today }: { g: Grimoire; today: DateKey }) {
       )}
       {v === "journal" && <JournalView key={selected} g={g} date={selected} today={today} onNavigate={(d) => open(d, "journal")} />}
       {v === "cabinet" && <CabinetView g={g} />}
+      {v === "insights" && <InsightsView g={g} today={today} />}
       {v === "settings" && <SettingsView g={g} today={today} />}
     </>
   );

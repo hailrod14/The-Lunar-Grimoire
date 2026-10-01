@@ -1,17 +1,21 @@
+import { isSealed, type SealedGrimoire } from "./crypto";
 import { isDateKey } from "./dates";
 import { ASPECTS, ELEMENTS, TIME_BLOCKS, type ElementLog } from "./elements";
 import { LIQUID_COLORS, VESSELS } from "./potions";
+import { BUILT_IN_SYMPTOMS } from "./symptoms";
 import {
   DEFAULT_SETTINGS,
   FLOWS,
   SCHEMA_VERSION,
   emptyDay,
   newGrimoire,
+  type CustomSymptom,
   type DayEntry,
   type Grimoire,
   type Potion,
   type PotionLog,
   type Settings,
+  type SymptomLog,
   type Tide,
 } from "./types";
 
@@ -45,6 +49,8 @@ function sanitizeSettings(v: unknown): Settings {
     musicEnabled: typeof s.musicEnabled === "boolean" ? s.musicEnabled : DEFAULT_SETTINGS.musicEnabled,
     musicVolume:
       typeof s.musicVolume === "number" && s.musicVolume >= 0 && s.musicVolume <= 1 ? s.musicVolume : DEFAULT_SETTINGS.musicVolume,
+    reminderNames: s.reminderNames === true,
+    autoLockMinutes: numberIn(s.autoLockMinutes, 0, 60, DEFAULT_SETTINGS.autoLockMinutes),
     lastBackupAt: typeof s.lastBackupAt === "string" && !Number.isNaN(Date.parse(s.lastBackupAt)) ? s.lastBackupAt : "",
   };
 }
@@ -68,6 +74,7 @@ function sanitizePotion(v: unknown): Potion | null {
     color: oneOf(v.color, colors) ? v.color : "gold",
     schedule: v.schedule === "as-needed" ? "as-needed" : "daily",
     archived: v.archived === true,
+    reminder: v.reminder === true,
   };
 }
 
@@ -96,22 +103,39 @@ function sanitizePotionLog(v: unknown): PotionLog | null {
 const keep = <T>(list: unknown, fn: (v: unknown) => T | null): T[] =>
   Array.isArray(list) ? list.map(fn).filter((x): x is T => x !== null) : [];
 
-function sanitizeDay(v: unknown): DayEntry {
+function sanitizeCustomSymptom(v: unknown): CustomSymptom | null {
+  if (!isObj(v) || typeof v.id !== "string" || !v.id || typeof v.name !== "string" || !v.name.trim()) return null;
+  return { id: v.id, name: v.name.trim(), archived: v.archived === true };
+}
+
+function sanitizeSymptomLog(known: Set<string>) {
+  return (v: unknown): SymptomLog | null => {
+    if (!isObj(v) || typeof v.id !== "string" || !known.has(v.id)) return null;
+    return { id: v.id, severity: numberIn(v.severity, 1, 3, 1) as SymptomLog["severity"] };
+  };
+}
+
+function sanitizeDay(v: unknown, knownSymptoms: Set<string>): DayEntry {
   const d = isObj(v) ? v : {};
   const day = emptyDay();
   const elements = isObj(d.elements) ? d.elements : {};
   for (const { id } of TIME_BLOCKS) day.elements[id] = keep(elements[id], sanitizeElementLog);
   day.journal = str(d.journal);
   day.potionLogs = keep(d.potionLogs, sanitizePotionLog);
+  // One entry per symptom per day.
+  const seen = new Set<string>();
+  day.symptoms = keep(d.symptoms, sanitizeSymptomLog(knownSymptoms)).filter((s) => !seen.has(s.id) && seen.add(s.id));
   if (oneOf(d.flow, FLOWS.map((f) => f.id))) day.flow = d.flow;
   return day;
 }
 
-/** Older saves are upgraded one version at a time. Add a case here when SCHEMA_VERSION increases. */
+/**
+ * Older saves are upgraded one version at a time. Add a step here when SCHEMA_VERSION increases.
+ * v1 → v2 added symptoms, custom symptoms, and potion reminders; sanitizing fills them with
+ * empty defaults, so no data needs rewriting.
+ */
 function migrate(raw: Obj): Obj {
-  const data = raw;
-  // switch (data.version) { case 1: data = migrate1to2(data); ... }
-  return data;
+  return raw;
 }
 
 export type ParseResult = { ok: true; grimoire: Grimoire } | { ok: false; error: string };
@@ -128,10 +152,13 @@ export function sanitizeGrimoire(raw: unknown): ParseResult {
   }
   const data = migrate(raw);
 
+  const customSymptoms = keep(data.customSymptoms, sanitizeCustomSymptom);
+  const knownSymptoms = new Set([...BUILT_IN_SYMPTOMS.map((s) => s.id), ...customSymptoms.map((s) => s.id)]);
+
   const days: Grimoire["days"] = {};
   if (isObj(data.days)) {
     for (const [key, value] of Object.entries(data.days)) {
-      if (isDateKey(key)) days[key] = sanitizeDay(value);
+      if (isDateKey(key)) days[key] = sanitizeDay(value, knownSymptoms);
     }
   }
 
@@ -142,6 +169,7 @@ export function sanitizeGrimoire(raw: unknown): ParseResult {
       settings: sanitizeSettings(data.settings),
       tides: keep(data.tides, sanitizeTide).sort((a, b) => (a.start < b.start ? -1 : 1)),
       potions: keep(data.potions, sanitizePotion),
+      customSymptoms,
       days,
     },
   };
@@ -163,11 +191,15 @@ export function parseGrimoireFile(text: string): ParseResult {
 
 // ── localStorage ─────────────────────────────────────────────
 
-export type LoadResult = {
-  grimoire: Grimoire;
-  /** Set when saved data existed but couldn't be read. It was kept under `backupKey`. */
-  problem?: { message: string; backupKey: string };
-};
+export type LoadResult =
+  | {
+      status: "open";
+      grimoire: Grimoire;
+      /** Set when saved data existed but couldn't be read. It was kept under `backupKey`. */
+      problem?: { message: string; backupKey: string };
+    }
+  /** A PIN is set: the Grimoire is encrypted and needs unlocking. */
+  | { status: "sealed"; sealed: SealedGrimoire };
 
 function storage(): Storage | null {
   try {
@@ -177,37 +209,58 @@ function storage(): Storage | null {
   }
 }
 
-export function loadGrimoire(now = new Date()): LoadResult {
-  const store = storage();
-  let text: string | null = null;
+/** The raw saved text, or null if there is none (or storage is blocked). */
+export function readStored(): string | null {
   try {
-    text = store?.getItem(STORAGE_KEY) ?? null;
+    return storage()?.getItem(STORAGE_KEY) ?? null;
   } catch {
-    text = null;
+    return null;
   }
-  if (text === null) return { grimoire: newGrimoire() };
-
-  const parsed = parseGrimoireFile(text);
-  if (parsed.ok) return { grimoire: parsed.grimoire };
-
-  // Never overwrite unreadable data: set it aside first.
-  const backupKey = `${STORAGE_KEY}:unreadable:${now.toISOString()}`;
-  try {
-    store?.setItem(backupKey, text);
-  } catch {
-    // Nothing more we can do; the original key is still untouched until the next save.
-  }
-  return { grimoire: newGrimoire(), problem: { message: parsed.error, backupKey } };
 }
 
-/** Returns false if the save failed (for example, storage is full or blocked). */
-export function saveGrimoire(g: Grimoire): boolean {
+/** Write raw text to the Grimoire's key. Returns false if the save failed (full or blocked storage). */
+export function writeStored(text: string): boolean {
   const store = storage();
   if (!store) return false;
   try {
-    store.setItem(STORAGE_KEY, JSON.stringify(g));
+    store.setItem(STORAGE_KEY, text);
     return true;
   } catch {
     return false;
   }
 }
+
+/** The sealed (encrypted) Grimoire currently saved, if a PIN is set. */
+export function readSealed(): SealedGrimoire | null {
+  const text = readStored();
+  if (!text) return null;
+  try {
+    const value = JSON.parse(text);
+    return isSealed(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function loadGrimoire(now = new Date()): LoadResult {
+  const text = readStored();
+  if (text === null) return { status: "open", grimoire: newGrimoire() };
+
+  const sealed = readSealed();
+  if (sealed) return { status: "sealed", sealed };
+
+  const parsed = parseGrimoireFile(text);
+  if (parsed.ok) return { status: "open", grimoire: parsed.grimoire };
+
+  // Never overwrite unreadable data: set it aside first.
+  const backupKey = `${STORAGE_KEY}:unreadable:${now.toISOString()}`;
+  try {
+    storage()?.setItem(backupKey, text);
+  } catch {
+    // Nothing more we can do; the original key is still untouched until the next save.
+  }
+  return { status: "open", grimoire: newGrimoire(), problem: { message: parsed.error, backupKey } };
+}
+
+/** Save the Grimoire unencrypted. Returns false if the save failed. */
+export const saveGrimoire = (g: Grimoire): boolean => writeStored(JSON.stringify(g));

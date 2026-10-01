@@ -43,3 +43,29 @@ export function BloodDropGlyph({ size = 14, title }: { size?: number; title?: st
     <PixelSprite rows={BLOOD_DROP} palette={{ o: "#4a0f1c", b: "#b8324a", w: "#f09aa8" }} size={size} title={title} />
   );
 }
+
+const CRYSTAL_BALL = [
+  "....oooo....",
+  "..oowwbboo..",
+  ".owwbbbbbbo.",
+  ".owbbbsbbbo.",
+  "obbbbbbbbbbo",
+  "obbbsbbbbbbo",
+  "obbbbbbbbbbo",
+  ".obbbbbbbbo.",
+  "..oobbbboo..",
+  "...gggggg...",
+  "..gGGGGGGg..",
+  "..gggggggg..",
+];
+
+export function CrystalBallGlyph({ size = 18, title }: { size?: number; title?: string }) {
+  return (
+    <PixelSprite
+      rows={CRYSTAL_BALL}
+      palette={{ o: "#2a1f4d", b: "#6b44b8", w: "#e4dbff", s: "#fff4c2", g: "#b07a1c", G: "#ffd866" }}
+      size={size}
+      title={title}
+    />
+  );
+}

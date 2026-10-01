@@ -1,7 +1,16 @@
 import { MAX_TIDE_DAYS, cycleStats, sortTides } from "./cycle";
 import { addDaysKey, diffKeys, type DateKey } from "./dates";
 import type { Element, ElementLog, TimeBlock } from "./elements";
-import { emptyDay, type DayEntry, type Flow, type Grimoire, type Potion, type Settings, type Tide } from "./types";
+import {
+  emptyDay,
+  type DayEntry,
+  type Flow,
+  type Grimoire,
+  type Potion,
+  type Settings,
+  type SymptomSeverity,
+  type Tide,
+} from "./types";
 
 /*
  * Every change to the Grimoire goes through these pure functions: each takes
@@ -39,6 +48,39 @@ export function loggedElements(day?: DayEntry): Element[] {
 
 export const setJournal = (g: Grimoire, date: DateKey, journal: string) =>
   updateDay(g, date, (d) => ({ ...d, journal }));
+
+// ── Symptoms ─────────────────────────────────────────────────
+
+/** Set how strongly a symptom was felt on a day; 0 removes it. */
+export function setSymptom(g: Grimoire, date: DateKey, id: string, severity: SymptomSeverity | 0): Grimoire {
+  return updateDay(g, date, (d) => {
+    const others = d.symptoms.filter((s) => s.id !== id);
+    if (severity === 0) return { ...d, symptoms: others };
+    const at = d.symptoms.findIndex((s) => s.id === id);
+    const symptoms = [...others];
+    symptoms.splice(at < 0 ? others.length : at, 0, { id, severity });
+    return { ...d, symptoms };
+  });
+}
+
+/** Add a personal symptom, or bring back a retired one with the same name. */
+export function addCustomSymptom(g: Grimoire, name: string): Grimoire {
+  const clean = name.trim();
+  if (!clean) return g;
+  const existing = g.customSymptoms.find((s) => s.name.toLowerCase() === clean.toLowerCase());
+  if (existing) {
+    return existing.archived
+      ? { ...g, customSymptoms: g.customSymptoms.map((s) => (s.id === existing.id ? { ...s, archived: false } : s)) }
+      : g;
+  }
+  return { ...g, customSymptoms: [...g.customSymptoms, { id: `custom-${newId()}`, name: clean, archived: false }] };
+}
+
+/** Retire a personal symptom from the picker. Days it was logged keep it. */
+export const retireCustomSymptom = (g: Grimoire, id: string): Grimoire => ({
+  ...g,
+  customSymptoms: g.customSymptoms.map((s) => (s.id === id ? { ...s, archived: true } : s)),
+});
 
 // ── Tides ────────────────────────────────────────────────────
 

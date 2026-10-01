@@ -96,7 +96,7 @@ export function schedulePageTurn(ac: BaseAudioContext, destination: AudioNode, w
 /** Play a page turn, unless page sounds are turned off. `force` plays it anyway (for previews). */
 export function playPageTurn(kind: Kind = "page", force = false) {
   try {
-    if (!force && !getGrimoire().settings.soundEnabled) return;
+    if (!force && !getGrimoire()?.settings.soundEnabled) return;
     const ac = audioContext();
     if (!ac) return;
     // A touch of variation so repeated turns don't sound mechanical.

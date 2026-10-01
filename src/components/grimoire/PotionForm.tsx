@@ -16,6 +16,7 @@ export const BLANK_POTION: PotionDraft = {
   color: "gold",
   schedule: "daily",
   archived: false,
+  reminder: false,
 };
 
 const input =
@@ -78,6 +79,16 @@ export function PotionForm({ initial, onSave, onCancel, saveLabel = "Save" }: Pr
             <span className="text-sm text-silver-300">Usual time</span>
             <input type="time" required className={input} value={p.time} onChange={(e) => set({ time: e.target.value })} />
           </label>
+        )}
+        {p.schedule === "daily" && (
+          <button
+            type="button"
+            aria-pressed={p.reminder}
+            onClick={() => set({ reminder: !p.reminder })}
+            className={`w-full px-3 py-2 text-left text-sm ${p.reminder ? "bg-violet-500 text-violet-100" : "bg-midnight-950 text-silver-500"}`}
+          >
+            🔔 {p.reminder ? "Remind me at this time" : "No reminder"}
+          </button>
         )}
         <p className="font-journal text-base text-silver-500">Any potion can also have extra doses logged on the day page.</p>
       </Section>

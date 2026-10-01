@@ -322,7 +322,7 @@ export function startMusic() {
     waitingForTap = null;
     const ac = audioContext();
     if (!ac || music) return;
-    music = new ForestMusic(ac, getGrimoire().settings.musicVolume);
+    music = new ForestMusic(ac, getGrimoire()?.settings.musicVolume ?? 0.5);
     document.addEventListener("visibilitychange", onVisibility);
   };
   const activated = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive;

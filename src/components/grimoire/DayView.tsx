@@ -37,6 +37,7 @@ import { FLOWS, type DayEntry, type Grimoire, type Potion, type PotionLog } from
 import { SkyBadge, TideBadge } from "./Badges";
 import { DateNav } from "./DateNav";
 import { Section } from "./Section";
+import { SymptomsSection } from "./SymptomsSection";
 
 type Props = {
   g: Grimoire;
@@ -77,6 +78,7 @@ export function DayView({ g, date, today, onNavigate, onOpenJournal, onOpenCabin
         <>
           {g.settings.cycleTracking && <TideSection g={g} date={date} today={today} day={day} />}
           <ElementsSection date={date} day={day} />
+          <SymptomsSection g={g} date={date} day={day} />
           <PotionsSection g={g} date={date} today={today} day={day} onOpenCabinet={onOpenCabinet} />
           <Section title="Journal">
             <textarea
