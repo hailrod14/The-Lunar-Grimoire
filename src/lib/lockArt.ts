@@ -1,94 +1,116 @@
 /*
- * Pixel art for the crescent-moon combination lock, drawn at any size so it
- * fits however many wheels the code needs. The body is a round brass moon:
- * the lit crescent polished gold, the shadowed part engraved darker bronze
- * and scattered with stars, with star rivets around the rim. The shackle is
- * a separate sprite so it can spring open.
+ * Pixel art for the cover's strap lock, after antique combination journal
+ * locks: a horizontal brass housing with a pointed nose, a round push-knob,
+ * notched edges, a window of number wheels, and a square end plate where the
+ * leather strap feeds in. Drawn to fit however many wheels the code needs.
  */
 
+/** One pixel of lock art, in screen pixels (the UI's pixel size). */
+export const ART = 4;
+
 export const LOCK_PALETTE: Record<string, string> = {
-  o: "#2a1a05", // outline
-  D: "#5c3d0c", // deep bronze
-  d: "#8a5a10", // bronze (the moon's shadow side)
-  g: "#f2b33d", // gold (the lit crescent)
-  G: "#ffd866", // bright gold
-  h: "#fff4c2", // highlight
-  s: "#fff4c2", // star
-  t: "#ffd866", // engraved star on the shadow side
+  o: "#241808", // outline
+  D: "#4a3612", // deep shadow
+  d: "#6e5320", // shadow
+  g: "#9a7b3c", // antique brass
+  G: "#c2a25e", // lit brass
+  h: "#e6d29a", // highlight
+  w: "#120c04", // the dark window behind the wheels
 };
 
-/** The moon-shaped body, `size` art pixels across. */
-export function lockBody(size: number): string[] {
-  const r = size / 2;
-  const c = r - 0.5;
-  const shadowShift = r * 0.55;
+/** Height of the lock in art pixels. */
+const H = 22;
+const MID = (H - 1) / 2;
+const NOSE = 6;
+const KNOB = { x: 9.5, y: MID, r: 4.8 };
+const WHEELS_FROM = 16;
+const NOTCHES = 5;
+const PLATE = 10;
+
+/** One wheel's width and one digit's height on the lock, in screen pixels. */
+export const WHEEL_PX = 22;
+export const ROW_PX = 18;
+export const WHEEL_GAP_PX = 2;
+
+export type LockLayout = {
+  rows: string[];
+  /** Sizes and positions in screen pixels. */
+  width: number;
+  height: number;
+  knob: { left: number; top: number; size: number };
+  window: { left: number; top: number; width: number; height: number };
+  /** Where the strap meets the end plate (vertical centre). */
+  strapTop: number;
+};
+
+export function strapLock(digits: number): LockLayout {
+  const windowPx = digits * WHEEL_PX + (digits - 1) * WHEEL_GAP_PX + 8;
+  const windowArt = Math.ceil(windowPx / ART);
+  const wheelsTo = WHEELS_FROM + windowArt; // exclusive
+  const plateFrom = wheelsTo + NOTCHES;
+  const W = plateFrom + PLATE;
+
   const rows: string[] = [];
-  for (let y = 0; y < size; y++) {
+  for (let y = 0; y < H; y++) {
     let row = "";
-    for (let x = 0; x < size; x++) {
-      const dx = x - c;
-      const dy = y - c;
-      const dist = Math.hypot(dx, dy);
-      if (dist > r - 0.2) {
-        row += ".";
-        continue;
-      }
-      if (dist > r - 1.3) {
-        row += "o";
-        continue;
-      }
-      const shadow = Math.hypot(dx - shadowShift, dy + shadowShift * 0.15) < r * 0.95;
-      const rim = dist > r - 2.6;
-      if (shadow) row += rim ? "D" : "d";
-      else if (rim) row += dx + dy < -r * 0.6 ? "h" : "G";
-      else row += dx + dy < -r * 0.9 ? "G" : "g";
-    }
+    for (let x = 0; x < W; x++) row += cell(x, y);
     rows.push(row);
   }
 
-  // Star rivets around the lit rim, and engraved stars in the shadow.
-  const put = (x: number, y: number, ch: string) => {
-    if (y < 0 || y >= size || x < 0 || x >= size || rows[y][x] === "." || rows[y][x] === "o") return;
-    rows[y] = rows[y].slice(0, x) + ch + rows[y].slice(x + 1);
-  };
-  const star = (x: number, y: number, ch: string, big: boolean) => {
-    put(x, y, ch);
-    if (big) [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => put(x + a, y + b, ch));
-  };
-  for (const angle of [120, 150, 180, 210, 240]) {
-    const a = (angle * Math.PI) / 180;
-    star(Math.round(c + Math.cos(a) * (r - 4)), Math.round(c - Math.sin(a) * (r - 4)), "s", angle === 180);
-  }
-  const engraved: [number, number, boolean][] = [
-    [0.62, 0.22, true],
-    [0.82, 0.4, false],
-    [0.7, 0.78, true],
-    [0.86, 0.62, false],
-    [0.55, 0.88, false],
-  ];
-  for (const [fx, fy, big] of engraved) star(Math.round(fx * size), Math.round(fy * size), "t", big);
-  return rows;
-}
-
-/** The arched shackle, `width` art pixels wide, rising `height` above the body. */
-export function lockShackle(width: number, height: number): string[] {
-  const rows: string[] = [];
-  const c = (width - 1) / 2;
-  const outer = width / 2;
-  const thick = Math.max(4, Math.round(width / 5));
-  for (let y = 0; y < height; y++) {
-    let row = "";
-    for (let x = 0; x < width; x++) {
-      // An arch: the top half of a ring, then straight legs down into the body.
-      const cy = outer - 0.5;
-      const dy = y < cy ? cy - y : 0;
-      const dist = Math.hypot(x - c, dy);
-      const inRing = dist <= outer - 0.3 && dist >= outer - thick;
-      if (!inRing) row += ".";
-      else if (dist >= outer - 1.2 || dist <= outer - thick + 0.8) row += "o";
-      else row += x < c ? "G" : "g";
+  function cell(x: number, y: number): string {
+    // The square end plate, full height, with a bevel and the strap slot.
+    if (x >= plateFrom) {
+      const px = x - plateFrom;
+      if (y === 0 || y === H - 1 || px === 0 || px === PLATE - 1) return "o";
+      if ((px === 2 || px === PLATE - 3) && (y === 3 || y === H - 4)) return "h"; // rivets
+      if (px === 4 && y > 5 && y < H - 6) return "D"; // the strap slot
+      if (y === 1 || px === 1) return "h";
+      if (y === H - 2 || px === PLATE - 2) return "D";
+      return px < 4 ? "G" : "g";
     }
-    rows.push(row);
+
+    // The round push-knob, over the nose and housing.
+    const kd = Math.hypot(x - KNOB.x, y - KNOB.y);
+    if (kd <= KNOB.r) {
+      if (kd > KNOB.r - 0.9) return "o";
+      const lit = x - KNOB.x + (y - KNOB.y);
+      if (kd > KNOB.r - 1.9) return lit < -2 ? "h" : lit > 2 ? "D" : "G";
+      return lit < -1 ? "G" : lit > 2 ? "d" : "g";
+    }
+
+    // The pointed nose.
+    if (x < NOSE) {
+      const half = (x / (NOSE - 1)) * 6.5;
+      const dy = Math.abs(y - MID);
+      if (dy > half + 0.5) return ".";
+      if (dy > half - 0.6) return "o";
+      return y < MID ? "G" : "d";
+    }
+
+    // The housing body, with notched edges outside the wheel window.
+    const top = 3;
+    const bottom = H - 4;
+    const notched = (x < WHEELS_FROM - 1 || x >= wheelsTo + 1) && (x - NOSE) % 3 !== 0;
+    if (notched && (y === top - 1 || y === bottom + 1)) return y < MID ? "G" : "d";
+    if (notched && (y === top - 2 || y === bottom + 2)) return "o";
+    if (y < top - 1 || y > bottom + 1) return ".";
+    if (y === top - 1 || y === bottom + 1) return "o";
+    if (x >= WHEELS_FROM && x < wheelsTo && y > top && y < bottom) return "w";
+    if (x === WHEELS_FROM - 1 || x === wheelsTo) return y === top || y === bottom ? "o" : "D";
+    if (y === top) return "h";
+    if (y === top + 1) return "G";
+    if (y === bottom) return "D";
+    if (y === bottom - 1) return "d";
+    return "g";
   }
-  return rows;
+
+  const knobSize = Math.round(KNOB.r * 2 * ART);
+  return {
+    rows,
+    width: W * ART,
+    height: H * ART,
+    knob: { left: Math.round((KNOB.x + 0.5) * ART - knobSize / 2), top: Math.round((KNOB.y + 0.5) * ART - knobSize / 2), size: knobSize },
+    window: { left: WHEELS_FROM * ART, top: 4 * ART, width: windowArt * ART, height: (H - 8) * ART },
+    strapTop: (H * ART) / 2,
+  };
 }

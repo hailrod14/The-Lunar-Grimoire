@@ -235,7 +235,7 @@ Every push to `main` builds and deploys the app to **GitHub Pages** automaticall
 - [x] Sleep & energy, journal prompts and moon rituals, and the apothecary shelf
 - [x] Home-screen reminders that ring while the app is closed
 - [x] Cover stickers and familiar visits on other pages
-- [x] A crescent-moon combination lock on the strap when a PIN is set
+- [x] An antique brass combination strap lock on the cover when a PIN is set
 
 **Phase 2**
 - [x] Optional PIN lock, with the Grimoire encrypted on the device (AES-256-GCM, PBKDF2 key) and auto-lock

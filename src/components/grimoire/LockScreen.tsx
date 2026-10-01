@@ -5,7 +5,7 @@ import { Minus, Plus } from "lucide-react";
 import { readCoverSnapshot } from "@/lib/coverSnapshot";
 import { dateKey } from "@/lib/dates";
 import { eraseEverything, prepareUnlock, useGrimoireState } from "@/lib/store";
-import { CombinationLock, lockMetrics } from "./CombinationLock";
+import { CombinationLock } from "./CombinationLock";
 import { LockedCover } from "./Cover";
 
 /** After this many wrong tries, wait before the next one. */
@@ -18,7 +18,7 @@ const MAX_DIGITS = 8;
 
 /**
  * Shown in place of the Grimoire while it's sealed with a PIN: the closed
- * book with its familiar and stickers, strapped shut with a crescent-moon lock.
+ * book with its familiar and stickers, strapped shut with a brass combination lock.
  */
 export function LockScreen() {
   const state = useGrimoireState();
@@ -60,7 +60,13 @@ export function LockScreen() {
     return false;
   };
 
-  const status = busy ? "Turning the lock…" : waiting > 0 ? `The lock is stiff. Try again in ${waiting} s.` : wrong > 0 ? "The lock holds fast." : "";
+  const status = busy
+    ? "Turning the lock…"
+    : waiting > 0
+      ? `The lock is stiff. Try again in ${waiting} s.`
+      : wrong > 0
+        ? "The lock holds fast."
+        : "Roll in your code, then press the knob.";
 
   const notes = (
     <div className={`flex flex-col items-end gap-1 text-right ${opening ? "opacity-0 transition-opacity" : ""}`}>
@@ -88,7 +94,7 @@ export function LockScreen() {
           </button>
         </div>
       )}
-      <p role="status" className={`font-journal text-base leading-tight text-gold-100 ${status ? "bg-black/40 px-2" : ""}`}>
+      <p role="status" className="bg-black/40 px-2 font-journal text-base leading-tight text-gold-100">
         {status}
       </p>
       {forgot === "no" && (
@@ -108,8 +114,6 @@ export function LockScreen() {
           familiar={cover?.familiar}
           stickers={cover?.stickers ?? []}
           opening={opening}
-          lockWidth={lockMetrics(digits).width}
-          shackleHeight={lockMetrics(digits).shackleHeight}
           lock={<CombinationLock key={digits} digits={digits} disabled={busy || waiting > 0} onTry={tryCode} />}
           notes={notes}
         />

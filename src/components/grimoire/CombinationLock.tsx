@@ -2,36 +2,29 @@
 
 import { useRef, useState } from "react";
 import { PixelSprite } from "@/components/pixel/PixelSprite";
-import { LOCK_PALETTE, lockBody, lockShackle } from "@/lib/lockArt";
+import { LOCK_PALETTE, ROW_PX, WHEEL_GAP_PX, WHEEL_PX, strapLock } from "@/lib/lockArt";
 
 /*
- * A crescent-moon combination lock hanging on the cover's strap, with one
- * rolling number wheel per digit. Roll a wheel by swiping it, or tap the
- * number showing above or below to roll to it; with a keyboard, arrow keys
- * roll and typed digits set it.
+ * An antique brass strap lock, like those on lockable journals: a pointed
+ * housing with a round push-knob, notched edges, a window of silver number
+ * wheels, and a square end plate where the strap feeds in. Roll a wheel by
+ * swiping it, or tap the number showing above or below to roll to it; then
+ * press the knob. With a keyboard, arrow keys roll, typed digits set a wheel,
+ * and Enter presses the knob.
  */
 
-/** One wheel's width and one digit's height, in pixels. */
-const WHEEL = 22;
-const ROW = 20;
-const GAP = 2;
 /** How far a finger travels to roll one number. */
 const SWIPE_STEP = 14;
-/** One pixel of lock art, in screen pixels (the UI's pixel size). */
-const ART = 4;
+/** The widest the lock may be before it's drawn smaller to fit a phone's cover. */
+const MAX_WIDTH = 264;
 
 const digitOf = (pos: number) => ((pos % 10) + 10) % 10;
 
-/** The moon's size in art pixels: big enough that the wheels fit across its face. */
-/** The lock's width and its shackle's height, in screen pixels. */
+/** The lock's on-screen size, scaled to fit. */
 export function lockMetrics(digits: number) {
-  const size = lockSize(digits);
-  return { width: size * ART, shackleHeight: Math.round(size * 0.36) * ART };
-}
-
-export function lockSize(digits: number) {
-  const slot = digits * WHEEL + (digits - 1) * GAP + 10;
-  return Math.max(38, Math.ceil(slot / 0.66 / ART));
+  const layout = strapLock(digits);
+  const scale = Math.min(1, MAX_WIDTH / layout.width);
+  return { width: layout.width * scale, height: layout.height * scale, scale, strapTop: layout.strapTop * scale };
 }
 
 function Wheel({
@@ -53,65 +46,64 @@ function Wheel({
 }) {
   const drag = useRef<{ y: number; start: number; moved: boolean } | null>(null);
   return (
-    <div style={{ width: WHEEL }}>
-      <div
-        ref={wheelRef}
-        role="spinbutton"
-        tabIndex={disabled ? -1 : 0}
-        aria-label={`Wheel ${index + 1} of ${count}`}
-        aria-valuemin={0}
-        aria-valuemax={9}
-        aria-valuenow={digitOf(pos)}
-        aria-disabled={disabled}
-        onKeyDown={onKey}
-        onPointerDown={(e) => {
-          if (disabled) return;
-          try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-          } catch {
-            // Rolling still works while the finger stays on the wheel.
-          }
-          drag.current = { y: e.clientY, start: pos, moved: false };
-        }}
-        onPointerMove={(e) => {
-          if (!drag.current) return;
-          const steps = Math.round((drag.current.y - e.clientY) / SWIPE_STEP);
-          if (steps) drag.current.moved = true;
-          if (drag.current.start + steps !== pos) onRoll(drag.current.start + steps);
-        }}
-        onPointerUp={(e) => {
-          // A tap (not a swipe) on the number above or below rolls the wheel to it.
-          if (drag.current && !drag.current.moved && !disabled) {
-            const y = e.clientY - e.currentTarget.getBoundingClientRect().top;
-            if (y < ROW) onRoll(pos - 1);
-            else if (y > ROW * 2) onRoll(pos + 1);
-          }
-          drag.current = null;
-        }}
-        onPointerCancel={() => (drag.current = null)}
-        className="relative cursor-ns-resize touch-none overflow-hidden bg-[#f6ead0] select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#fff4c2]"
-        style={{ height: ROW * 3 }}
-      >
-        {[-2, -1, 0, 1, 2].map((k) => (
-          <span
-            key={pos + k}
-            aria-hidden
-            className="absolute inset-x-0 grid place-items-center font-display text-lg leading-none text-[#2a1a05] transition-transform duration-150 ease-out"
-            style={{ height: ROW, transform: `translateY(${(k + 1) * ROW}px)` }}
-          >
-            {digitOf(pos + k)}
-          </span>
-        ))}
-        {/* The drum curves away above and below the window */}
+    <div
+      ref={wheelRef}
+      role="spinbutton"
+      tabIndex={disabled ? -1 : 0}
+      aria-label={`Wheel ${index + 1} of ${count}`}
+      aria-valuemin={0}
+      aria-valuemax={9}
+      aria-valuenow={digitOf(pos)}
+      aria-disabled={disabled}
+      onKeyDown={onKey}
+      onPointerDown={(e) => {
+        if (disabled) return;
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // Rolling still works while the finger stays on the wheel.
+        }
+        drag.current = { y: e.clientY, start: pos, moved: false };
+      }}
+      onPointerMove={(e) => {
+        if (!drag.current) return;
+        const steps = Math.round((drag.current.y - e.clientY) / SWIPE_STEP);
+        if (steps) drag.current.moved = true;
+        if (drag.current.start + steps !== pos) onRoll(drag.current.start + steps);
+      }}
+      onPointerUp={(e) => {
+        // A tap (not a swipe) on the number above or below rolls the wheel to it.
+        if (drag.current && !drag.current.moved && !disabled) {
+          const r = e.currentTarget.getBoundingClientRect();
+          const y = (e.clientY - r.top) / r.height;
+          if (y < 1 / 3) onRoll(pos - 1);
+          else if (y > 2 / 3) onRoll(pos + 1);
+        }
+        drag.current = null;
+      }}
+      onPointerCancel={() => (drag.current = null)}
+      className="relative shrink-0 cursor-ns-resize touch-none overflow-hidden bg-[#dfe2ea] select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#e6d29a]"
+      style={{ width: WHEEL_PX, height: ROW_PX * 3 }}
+    >
+      {[-2, -1, 0, 1, 2].map((k) => (
         <span
+          key={pos + k}
           aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgb(42 26 5 / 0.8), rgb(42 26 5 / 0.2) 30%, transparent 36%, transparent 64%, rgb(42 26 5 / 0.2) 70%, rgb(42 26 5 / 0.8))",
-          }}
-        />
-      </div>
+          className="absolute inset-x-0 grid place-items-center font-display text-lg leading-none text-[#1a1433] transition-transform duration-150 ease-out"
+          style={{ height: ROW_PX, transform: `translateY(${(k + 1) * ROW_PX}px)` }}
+        >
+          {digitOf(pos + k)}
+        </span>
+      ))}
+      {/* A silver drum, curving away above and below */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgb(26 20 51 / 0.85), rgb(26 20 51 / 0.25) 30%, transparent 36%, transparent 64%, rgb(26 20 51 / 0.25) 70%, rgb(26 20 51 / 0.85)), linear-gradient(to right, rgb(255 255 255 / 0.35), transparent 40%, rgb(0 0 0 / 0.15))",
+        }}
+      />
     </div>
   );
 }
@@ -128,11 +120,8 @@ export function CombinationLock({ digits, disabled, onTry }: Props) {
   const [state, setState] = useState<"shut" | "rattle" | "open">("shut");
   const wheels = useRef<(HTMLDivElement | null)[]>([]);
 
-  const size = lockSize(digits);
-  const body = lockBody(size);
-  const shackleWidth = Math.round(size * 0.5) & ~1;
-  const shackleHeight = Math.round(size * 0.36);
-  const shackle = lockShackle(shackleWidth, shackleHeight);
+  const layout = strapLock(digits);
+  const { scale } = lockMetrics(digits);
 
   const pos = Array.from({ length: digits }, (_, i) => positions[i] ?? 0);
   const roll = (i: number, p: number) => setPositions(pos.map((x, j) => (j === i ? p : x)));
@@ -162,61 +151,52 @@ export function CombinationLock({ digits, disabled, onTry }: Props) {
     e.preventDefault();
   };
 
-  const width = size * ART;
   const shut = disabled || state === "open";
 
   return (
-    <div
-      className={`relative flex flex-col items-center ${state === "rattle" ? "lock-rattle" : ""} ${state === "open" ? "lock-fall" : ""}`}
-      style={{ width }}
-    >
-      {/* The shackle springs up when the code is right (drawn above the strap, so the strap passes through it) */}
+    <div style={{ width: layout.width * scale, height: layout.height * scale }}>
       <div
-        aria-hidden
-        className="relative z-20 transition-transform duration-300 ease-out"
-        style={{ marginBottom: -ART * 3, transform: state === "open" ? `translateY(-${ART * 4}px)` : undefined }}
+        className={`relative origin-top-left ${state === "rattle" ? "lock-rattle" : ""} ${state === "open" ? "lock-fall" : ""}`}
+        style={{ width: layout.width, height: layout.height, transform: scale < 1 ? `scale(${scale})` : undefined }}
       >
-        <PixelSprite rows={shackle} palette={LOCK_PALETTE} size={shackleWidth * ART} />
-      </div>
+        <span aria-hidden className="absolute inset-0" style={{ filter: "drop-shadow(0 4px 0 rgb(0 0 0 / 0.4))" }}>
+          <PixelSprite rows={layout.rows} palette={LOCK_PALETTE} size={layout.width} />
+        </span>
 
-      {/* The moon, with the wheels set across its face */}
-      <div className="relative z-30" style={{ width, height: width, filter: "drop-shadow(0 4px 0 rgb(0 0 0 / 0.35))" }}>
-        <PixelSprite rows={body} palette={LOCK_PALETTE} size={width} />
-        <div className="absolute inset-0 grid place-items-center">
-          <div
-            className="flex bg-[#2a1a05] p-[3px] shadow-[0_0_0_2px_#ffd866,0_0_0_4px_#5c3d0c]"
-            style={{ gap: GAP }}
-            role="group"
-            aria-label={`Combination lock, ${digits} wheels`}
-          >
-            {pos.map((p, i) => (
-              <Wheel
-                key={i}
-                index={i}
-                count={digits}
-                pos={p}
-                disabled={shut}
-                onRoll={(next) => roll(i, next)}
-                onKey={onKey(i)}
-                wheelRef={(el) => {
-                  wheels.current[i] = el;
-                }}
-              />
-            ))}
-          </div>
+        {/* The number wheels, behind their window */}
+        <div
+          className="absolute flex items-center justify-center"
+          style={{ ...layout.window, gap: WHEEL_GAP_PX }}
+          role="group"
+          aria-label={`Combination lock, ${digits} wheels`}
+        >
+          {pos.map((p, i) => (
+            <Wheel
+              key={i}
+              index={i}
+              count={digits}
+              pos={p}
+              disabled={shut}
+              onRoll={(next) => roll(i, next)}
+              onKey={onKey(i)}
+              wheelRef={(el) => {
+                wheels.current[i] = el;
+              }}
+            />
+          ))}
         </div>
-      </div>
 
-      {/* A little brass tag hanging below: press it to try the code */}
-      <span aria-hidden className="h-2 w-1 bg-[#b07a1c]" />
-      <button
-        type="button"
-        onClick={() => void tryOpen()}
-        disabled={shut}
-        className="bg-[#f2b33d] px-4 py-1 font-display text-base tracking-wider text-[#2a1a05] shadow-[inset_-3px_-3px_0_#b07a1c,inset_3px_3px_0_#fff4c2,0_3px_0_#5c3d0c] hover:brightness-110 active:translate-y-px disabled:opacity-70"
-      >
-        {state === "open" ? "Unlocked" : "Open"}
-      </button>
+        {/* The round knob: press it to open */}
+        <button
+          type="button"
+          onClick={() => void tryOpen()}
+          disabled={shut}
+          aria-label="Press the knob to open the lock"
+          title="Press to open"
+          className="absolute rounded-full hover:bg-[#fff4c2]/25 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#e6d29a] active:translate-x-px active:translate-y-px disabled:cursor-default"
+          style={{ left: layout.knob.left, top: layout.knob.top, width: layout.knob.size, height: layout.knob.size }}
+        />
+      </div>
       <p className="sr-only" aria-live="polite">
         {state === "open" ? "Unlocked." : ""}
       </p>

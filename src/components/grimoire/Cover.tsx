@@ -177,37 +177,30 @@ type LockedProps = {
   lock: React.ReactNode;
   /** True once the lock opens, so the strap drops away with it. */
   opening: boolean;
-  /** The lock's width and its shackle's height, so the strap can pass through the shackle. */
-  lockWidth: number;
-  shackleHeight: number;
-  /** Messages and "Forgot your code?", shown beside the lock. */
+  /** Messages and "Forgot your code?", shown below the lock. */
   notes: React.ReactNode;
 };
 
 /**
- * The closed grimoire with a PIN set: the same cover, strapped shut with a
- * crescent-moon lock where the clasp usually is. The moon shows the real sky,
+ * The closed grimoire with a PIN set: the same cover, strapped shut with an
+ * antique brass combination lock where the clasp usually is. The moon shows the real sky,
  * and the familiar a neutral mood, so nothing about your cycle shows.
  */
-export function LockedCover({ today, familiar, stickers, lock, opening, notes, lockWidth, shackleHeight }: LockedProps) {
+export function LockedCover({ today, familiar, stickers, lock, opening, notes }: LockedProps) {
   return (
     <div className="cover-gilt relative min-h-[85dvh] overflow-hidden text-center" style={LEATHER}>
       <CoverDecor clasp={false} />
       <CoverFace moonPhase={skyMoonPhase(parseKey(today))} today={today} compact />
       {familiar && <CoverStickers stickers={stickers} familiar={familiar} mood="waxing" readOnly />}
-      <div className="absolute right-0 bottom-[5%] left-10 z-30 flex items-end justify-end gap-1">
-        <div className="mb-2 min-w-0 shrink">{notes}</div>
-        <div className="relative shrink-0">
-          {/* The strap: from the fore-edge, through the lock's shackle */}
-          <span
-            aria-hidden
-            className={`absolute left-1/2 z-0 h-10 border-y-4 border-dashed border-gold-900 bg-(--cover-spine) shadow-[0_3px_0_rgb(0_0_0/0.35)] ${opening ? "strap-fall" : ""}`}
-            style={{ top: shackleHeight * 0.45 - 20, width: lockWidth / 2 + 48 }}
-          />
-          <div className="relative z-10">{lock}</div>
-        </div>
-        <span aria-hidden className="w-10 shrink-0" />
+      {/* The lock sits where the clasp does, its strap running out to the fore-edge */}
+      <div className="absolute top-[74%] right-0 z-30 flex -translate-y-1/2 items-center">
+        {lock}
+        <span
+          aria-hidden
+          className={`-ml-1 h-9 w-6 shrink-0 border-y-4 border-dashed border-gold-900 bg-(--cover-spine) shadow-[0_3px_0_rgb(0_0_0/0.35)] ${opening ? "strap-fall" : ""}`}
+        />
       </div>
+      <div className="absolute right-8 bottom-[2.5%] left-12 z-30 flex justify-end">{notes}</div>
     </div>
   );
 }
