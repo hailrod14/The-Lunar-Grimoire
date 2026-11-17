@@ -11,6 +11,11 @@ The Lunar Grimoire turns your cycle into a personal **Lunar Tide**, your moods i
 > ✨ **Status:** Phase 1 (MVP) is complete.
 
 ---
+# Why I built this
+
+I wanted a period tracker, but I kept hearing about period-tracking apps sharing users’ health data with tech and marketing companies. So I built one that keeps data on your own device. I designed it and built it with an AI coding assistant. When I audited my own code, I found the medication-reminder server stores dose schedules as readable text and doesn’t delete them when reminders are turned off. That’s next on my list to fix.
+
+---
 
 ## ✨ Features
 
